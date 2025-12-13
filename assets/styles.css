@@ -1,0 +1,260 @@
+/* ============================================
+   DARK THEME DATA VISUALIZATION DASHBOARD
+   Modern, Glassmorphism-inspired styling
+   ============================================ */
+
+/* Import Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* CSS Variables */
+:root {
+    --bg-primary: #0f0f1a;
+    --bg-secondary: #1a1a2e;
+    --bg-card: rgba(30, 30, 50, 0.8);
+    --bg-card-hover: rgba(40, 40, 65, 0.9);
+    --accent-primary: #6366f1;
+    --accent-secondary: #8b5cf6;
+    --accent-tertiary: #06b6d4;
+    --accent-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #06b6d4 100%);
+    --text-primary: #ffffff;
+    --text-secondary: #a0a0b0;
+    --text-muted: #6b7280;
+    --border-color: rgba(99, 102, 241, 0.2);
+    --shadow-glow: 0 0 40px rgba(99, 102, 241, 0.15);
+    --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.3);
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Reset & Base */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+/* Background Pattern */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background:
+        radial-gradient(ellipse at 20% 20%, rgba(99, 102, 241, 0.1) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 80%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 50%, rgba(6, 182, 212, 0.05) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: -1;
+}
+
+/* Main Container */
+.main-container {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 30px;
+}
+
+/* Header */
+.dashboard-header {
+    text-align: center;
+    padding: 40px 20px;
+    margin-bottom: 30px;
+    background: var(--bg-card);
+    border-radius: 20px;
+    border: 1px solid var(--border-color);
+    backdrop-filter: blur(10px);
+    box-shadow: var(--shadow-card);
+    position: relative;
+    overflow: hidden;
+}
+
+.dashboard-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--accent-gradient);
+}
+
+.dashboard-header h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    background: var(--accent-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 10px;
+    letter-spacing: -0.5px;
+}
+
+.dashboard-header p {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    font-weight: 400;
+}
+
+/* Card Styling */
+.graph-card {
+    background: var(--bg-card);
+    border-radius: 16px;
+    border: 1px solid var(--border-color);
+    padding: 24px;
+    margin-bottom: 24px;
+    backdrop-filter: blur(10px);
+    box-shadow: var(--shadow-card);
+    transition: var(--transition-smooth);
+    position: relative;
+    overflow: hidden;
+}
+
+.graph-card:hover {
+    background: var(--bg-card-hover);
+    border-color: rgba(99, 102, 241, 0.4);
+    box-shadow: var(--shadow-glow);
+    transform: translateY(-2px);
+}
+
+.graph-card h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.graph-card h3::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent-gradient);
+    animation: pulse 2s infinite;
+}
+
+.graph-card p {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    margin-bottom: 16px;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 0.5;
+        transform: scale(1.2);
+    }
+}
+
+/* Top Row - Main Graph + Scatter */
+.top-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 24px;
+    margin-bottom: 24px;
+}
+
+/* Heatmaps Grid */
+.heatmaps-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.heatmap-card {
+    background: var(--bg-card);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    padding: 16px;
+    transition: var(--transition-smooth);
+}
+
+.heatmap-card:hover {
+    background: var(--bg-card-hover);
+    border-color: rgba(99, 102, 241, 0.4);
+}
+
+/* Footer */
+.dashboard-footer {
+    text-align: center;
+    padding: 30px;
+    margin-top: 30px;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+}
+
+.dashboard-footer a {
+    color: var(--accent-primary);
+    text-decoration: none;
+}
+
+/* Slider Styling */
+.rc-slider-track {
+    background: var(--accent-gradient) !important;
+}
+
+.rc-slider-handle {
+    border-color: var(--accent-primary) !important;
+    background: var(--accent-primary) !important;
+}
+
+.rc-slider-rail {
+    background: var(--bg-secondary) !important;
+}
+
+/* Dropdown Styling */
+.Select-control {
+    background: var(--bg-secondary) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-primary) !important;
+}
+
+.Select-menu-outer {
+    background: var(--bg-secondary) !important;
+    border-color: var(--border-color) !important;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .top-row {
+        grid-template-columns: 1fr;
+    }
+
+    .heatmaps-container {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .main-container {
+        padding: 15px;
+    }
+
+    .dashboard-header h1 {
+        font-size: 1.8rem;
+    }
+
+    .graph-card {
+        padding: 16px;
+    }
+}
+
+/* Cards are visible by default - no animation to prevent layout issues */
