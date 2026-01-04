@@ -150,14 +150,28 @@ body::before {
     margin-bottom: 16px;
 }
 
-@keyframes pulse {
+/* Card Header with Flexbox */
+.graph-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+    gap: 24px;
+}
 
+.metric-controls-container {
+    background: rgba(15, 15, 26, 0.4);
+    padding: 12px 16px;
+    border-radius: 10px;
+    border: 1px solid var(--border-color);
+}
+
+@keyframes pulse {
     0%,
     100% {
         opacity: 1;
         transform: scale(1);
     }
-
     50% {
         opacity: 0.5;
         transform: scale(1.2);
@@ -232,6 +246,34 @@ body::before {
     border-color: var(--border-color) !important;
 }
 
+/* Checklist Styling */
+.custom-checklist {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.custom-checklist label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+}
+
+.custom-checklist label:hover {
+    color: var(--text-primary);
+}
+
+.custom-checklist input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--accent-primary);
+    cursor: pointer;
+}
+
 /* Responsive Design */
 @media (max-width: 1200px) {
     .top-row {
@@ -254,6 +296,11 @@ body::before {
 
     .graph-card {
         padding: 16px;
+    }
+
+    .graph-card-header {
+        flex-direction: column;
+        align-items: stretch;
     }
 }
 
