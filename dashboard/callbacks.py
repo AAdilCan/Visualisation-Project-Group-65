@@ -5,12 +5,12 @@ from dashboard.violinchart import create_violin_chart
 
 
 @callback(
-    Output("stream-graph", "figure"),
-    [Input("metric-checklist", "value")],
+    Output("line-chart", "figure"),
+    [Input("metric-checklist", "value"), Input("services-checklist", "value")],
 )
-def update_stream_graph(selected_metrics):
+def update_stream_graph(selected_metrics, selected_services):
     """Update stream graph based on metric selection"""
-    return create_line_chart(selected_metrics)
+    return create_line_chart(selected_metrics, selected_services)
 
 
 @callback(Output("violin-chart", "figure"), Input("quarter-dropdown", "value"))

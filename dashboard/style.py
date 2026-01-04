@@ -13,6 +13,7 @@ MAIN_COLORS = {
 
 # Vibrant color palette for charts
 CHART_COLORS = ["#6366f1", "#8b5cf6", "#06b6d4", "#10b981", "#f59e0b"]
+STREAM_GRAPH_COLORS = ["#ef4444", "#3b82f6", "#10b981", "#f59e0b", "#0f0f1a"]
 HEATMAP_COLORSCALE = [[0, "#1e1e3c"], [0.25, "#3b3b6d"], [0.5, "#6366f1"], [0.75, "#8b5cf6"], [1, "#c4b5fd"]]
 
 

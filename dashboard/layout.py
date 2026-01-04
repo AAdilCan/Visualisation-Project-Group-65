@@ -1,6 +1,6 @@
 from dash import dcc, html
 
-from dashboard.dash_data import HEATMAP1, HEATMAP2, HEATMAP3, HEATMAP4
+from dashboard.dash_data import HEATMAP1, HEATMAP2, HEATMAP3, HEATMAP4, SERVICES, SERVICES_MAPPING
 from dashboard.heatmap import create_heatmap
 from dashboard.linechart import create_line_chart
 from dashboard.scatterplot_matrix import create_scatter_plot
@@ -30,15 +30,27 @@ LAYOUT = html.Div(
                                     [
                                         html.Div(
                                             [
-                                                html.H3("Stream Graph with Trend Analysis"),
-                                                html.P("Category performance over time with average trend"),
+                                                html.H3("Services Weekly Performance"),
+                                                html.P(
+                                                    "Satisfaction Metrics for services"
+                                                    " against Patient Admissions and Bed Availability"
+                                                ),
+                                                html.P(
+                                                    "* The scale for the streamgraph "
+                                                    "is not aligned with the metric scores.",
+                                                    style={
+                                                        "color": "#6b7280",
+                                                        "fontSize": "0.75rem",
+                                                        "fontStyle": "italic",
+                                                    },
+                                                ),
                                             ],
                                             style={"flex": "1"},
                                         ),
                                         html.Div(
                                             [
                                                 html.Label(
-                                                    "Select Metrics:",
+                                                    "Metrics:",
                                                     style={
                                                         "color": "#a0a0b0",
                                                         "marginBottom": "8px",
@@ -50,25 +62,43 @@ LAYOUT = html.Div(
                                                     id="metric-checklist",
                                                     options=[
                                                         {
-                                                            "label": " Patient Satisfaction",
-                                                            "value": "patient_satisfaction",
+                                                            "label": "Patient Satisfaction",
+                                                            "value": "Patient Satisfaction",
                                                         },
-                                                        {"label": " Staff Morale", "value": "staff_morale"},
+                                                        {"label": "Staff Morale", "value": "Staff Morale"},
                                                     ],
-                                                    value=["patient_satisfaction"],
+                                                    value=["Patient Satisfaction"],
+                                                    className="custom-checklist",
+                                                ),
+                                                html.Label(
+                                                    "Services:",
+                                                    style={
+                                                        "color": "#a0a0b0",
+                                                        "marginBottom": "8px",
+                                                        "display": "block",
+                                                        "fontSize": "0.8rem",
+                                                    },
+                                                ),
+                                                dcc.Checklist(
+                                                    id="services-checklist",
+                                                    options=[
+                                                        {"label": label, "value": service}
+                                                        for service, label in SERVICES_MAPPING.items()
+                                                    ],
+                                                    value=[SERVICES[0]],
                                                     className="custom-checklist",
                                                 ),
                                             ],
-                                            className="metric-controls-container",
+                                            className="services-filters-container",
                                         ),
                                     ],
                                     className="graph-card-header",
                                 ),
                                 dcc.Graph(
-                                    id="stream-graph",
-                                    figure=create_line_chart(["patient_satisfaction"]),
+                                    id="line-chart",
+                                    figure=create_line_chart(["Patient Satisfaction"], [SERVICES[0]]),
                                     config={"responsive": False},
-                                    style={"height": "500px"},
+                                    style={"height": "600px"},
                                 ),
                             ],
                             className="graph-card",

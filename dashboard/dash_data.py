@@ -29,13 +29,13 @@ SERVICES_MAPPING = {
 }
 
 # Stream Graph Data (multiple categories over time)
-SERVICES = list(SERVICES_MAPPING.values())
+SERVICES = list(SERVICES_MAPPING.keys())
 STREAM_DATA = pd.DataFrame(
     {
         "Week": WEEKS * len(SERVICES),
         "Date": DATES * len(SERVICES),
         "Category": np.repeat(SERVICES, 52),
-        "patient_satisfaction": np.concatenate(
+        "Patient Satisfaction": np.concatenate(
             [
                 SERVICES_DATA[SERVICES_DATA["service"] == "emergency"][
                     "satisfaction_from_patients"
@@ -51,7 +51,7 @@ STREAM_DATA = pd.DataFrame(
                 ].tolist(),  # General Medicine - slight decline
             ]
         ),
-        "staff_morale": np.concatenate(
+        "Staff Morale": np.concatenate(
             [
                 SERVICES_DATA[SERVICES_DATA["service"] == "emergency"][
                     "staff_morale"
@@ -63,21 +63,53 @@ STREAM_DATA = pd.DataFrame(
                 ].tolist(),  # General Medicine - slight decline
             ]
         ),
+        "Available Beds": np.concatenate(
+            [
+                SERVICES_DATA[SERVICES_DATA["service"] == "emergency"]["available_beds"].tolist(),
+                SERVICES_DATA[SERVICES_DATA["service"] == "ICU"]["available_beds"].tolist(),
+                SERVICES_DATA[SERVICES_DATA["service"] == "surgery"]["available_beds"].tolist(),
+                SERVICES_DATA[SERVICES_DATA["service"] == "general_medicine"]["available_beds"].tolist(),
+            ]
+        ),
+        "Patient Requests": np.concatenate(
+            [
+                SERVICES_DATA[SERVICES_DATA["service"] == "emergency"]["patients_request"].tolist(),
+                SERVICES_DATA[SERVICES_DATA["service"] == "ICU"]["patients_request"].tolist(),
+                SERVICES_DATA[SERVICES_DATA["service"] == "surgery"]["patients_request"].tolist(),
+                SERVICES_DATA[SERVICES_DATA["service"] == "general_medicine"]["patients_request"].tolist(),
+            ]
+        ),
+        "Patient Admissions": np.concatenate(
+            [
+                SERVICES_DATA[SERVICES_DATA["service"] == "emergency"]["patients_admitted"].tolist(),
+                SERVICES_DATA[SERVICES_DATA["service"] == "ICU"]["patients_admitted"].tolist(),
+                SERVICES_DATA[SERVICES_DATA["service"] == "surgery"]["patients_admitted"].tolist(),
+                SERVICES_DATA[SERVICES_DATA["service"] == "general_medicine"]["patients_admitted"].tolist(),
+            ]
+        ),
+        "Patient Refusals": np.concatenate(
+            [
+                SERVICES_DATA[SERVICES_DATA["service"] == "emergency"]["patients_refused"].tolist(),
+                SERVICES_DATA[SERVICES_DATA["service"] == "ICU"]["patients_refused"].tolist(),
+                SERVICES_DATA[SERVICES_DATA["service"] == "surgery"]["patients_refused"].tolist(),
+                SERVICES_DATA[SERVICES_DATA["service"] == "general_medicine"]["patients_refused"].tolist(),
+            ]
+        ),
     }
 )
 
 # Scatter Plot Data
-n_points = 200
+N_POINTS = 200
 SCATTER_DATA = pd.DataFrame(
     {
-        "X_Value": np.random.randn(n_points) * 20 + 50,
-        "Y_Value": np.random.randn(n_points) * 15 + 40,
-        "Size": np.random.uniform(10, 50, n_points),
-        "Category": np.random.choice(SERVICES, n_points),
-        "Performance": np.random.uniform(0, 100, n_points),
+        "X_Value": np.random.randn(N_POINTS) * 20 + 50,
+        "Y_Value": np.random.randn(N_POINTS) * 15 + 40,
+        "Size": np.random.uniform(10, 50, N_POINTS),
+        "Category": np.random.choice(SERVICES, N_POINTS),
+        "Performance": np.random.uniform(0, 100, N_POINTS),
     }
 )
-SCATTER_DATA["Y_Value"] = SCATTER_DATA["X_Value"] * 0.6 + np.random.randn(n_points) * 10 + 10
+SCATTER_DATA["Y_Value"] = SCATTER_DATA["X_Value"] * 0.6 + np.random.randn(N_POINTS) * 10 + 10
 
 
 # Heatmap Data (4 different correlation matrices)
