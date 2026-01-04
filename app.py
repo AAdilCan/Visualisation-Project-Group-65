@@ -4,7 +4,7 @@
 import dash
 
 from dashboard.layout import LAYOUT
-import dashboard.callbacks  # Import callbacks to register them
+import dashboard.callbacks  # noqa: F401, Import callbacks to register them
 
 
 # ============================================
