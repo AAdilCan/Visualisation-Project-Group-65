@@ -150,14 +150,58 @@ body::before {
     margin-bottom: 16px;
 }
 
-@keyframes pulse {
+/* Card Header with Flexbox */
+.graph-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+    gap: 24px;
+}
 
+.services-filters-container {
+    background: rgba(15, 15, 26, 0.4);
+    padding: 6px 10px;
+    border-radius: 10px;
+    border: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.services-filters-container label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+}
+
+.services-filters-container label:not(.custom-checklist label) {
+    margin-top: 2px;
+    font-weight: 600;
+}
+
+.services-filters-container label:hover {
+    color: var(--text-primary);
+}
+
+.services-filters-container input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--accent-primary);
+    cursor: pointer;
+    margin-right: 4px;
+}
+
+@keyframes pulse {
     0%,
     100% {
         opacity: 1;
         transform: scale(1);
     }
-
     50% {
         opacity: 0.5;
         transform: scale(1.2);
@@ -232,6 +276,35 @@ body::before {
     border-color: var(--border-color) !important;
 }
 
+/* Checklist Styling */
+.custom-checklist {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.custom-checklist label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+}
+
+.custom-checklist label:hover {
+    color: var(--text-primary);
+}
+
+.custom-checklist input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--accent-primary);
+    cursor: pointer;
+    margin-right: 8px;
+}
+
 /* Responsive Design */
 @media (max-width: 1200px) {
     .top-row {
@@ -254,6 +327,11 @@ body::before {
 
     .graph-card {
         padding: 16px;
+    }
+
+    .graph-card-header {
+        flex-direction: column;
+        align-items: stretch;
     }
 }
 
