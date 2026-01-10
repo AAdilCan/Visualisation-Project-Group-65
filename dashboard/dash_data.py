@@ -99,17 +99,35 @@ STREAM_DATA = pd.DataFrame(
 )
 
 # Scatter Plot Data
-N_POINTS = 200
-SCATTER_DATA = pd.DataFrame(
-    {
-        "X_Value": np.random.randn(N_POINTS) * 20 + 50,
-        "Y_Value": np.random.randn(N_POINTS) * 15 + 40,
-        "Size": np.random.uniform(10, 50, N_POINTS),
-        "Category": np.random.choice(SERVICES, N_POINTS),
-        "Performance": np.random.uniform(0, 100, N_POINTS),
-    }
+
+SCATTER_DATA = SERVICES_DATA.copy()
+
+SCATTER_DATA["Category"] = SCATTER_DATA["service"].map(SERVICES_MAPPING)
+
+SCATTER_DATA["Refused/Requested Ratio"] = (
+    SCATTER_DATA["patients_refused"] / SCATTER_DATA["patients_request"].replace(0, 1)
 )
-SCATTER_DATA["Y_Value"] = SCATTER_DATA["X_Value"] * 0.6 + np.random.randn(N_POINTS) * 10 + 10
+
+total_staff = SCATTER_DATA["doctors_count"] + SCATTER_DATA["nurses_count"]
+SCATTER_DATA["Staff/Patient Ratio"] = (
+    total_staff / SCATTER_DATA["patients_admitted"].replace(0, 1)
+)
+
+SCATTER_DATA.rename(columns={
+    "satisfaction_from_patients": "Satisfaction",
+    "staff_morale": "Morale",
+    "week": "Week"
+}, inplace=True)
+
+# Select only the columns needed for the Scatter Plot Matrix
+SCATTER_DATA = SCATTER_DATA[[
+    "Week",
+    "Category",
+    "Satisfaction",
+    "Morale",
+    "Refused/Requested Ratio",
+    "Staff/Patient Ratio"
+]]
 
 
 # Heatmap Data (4 different correlation matrices)

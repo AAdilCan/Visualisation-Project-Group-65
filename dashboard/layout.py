@@ -85,17 +85,21 @@ SCATTER_PLOT_CARD = html.Div(
         html.Div(
             [
                 html.H3("Scatter Plot Analysis"),
-                html.P("Correlation between variables by category"),
+                html.P("Correlation Matrix of Service Metrics"),
             ]
         ),
         dcc.Graph(
             id="scatter-plot",
             figure=create_scatter_plot(),
             config={"responsive": False},
-            style={"height": "450px"},
+            # Increased height to 750px. This allows the 4x4 matrix to be readable
+            # and roughly matches the height of the 2x2 Heatmaps block next to it.
+            style={"height": "750px"},
         ),
     ],
     className="graph-card",
+    # Ensure the card itself fills the height of the grid cell
+    style={"height": "100%"}
 )
 
 
@@ -158,6 +162,7 @@ HEATMAPS_CONTAINER = html.Div(
         ),
     ],
     className="graph-card",
+    style={"height": "100%"}
 )
 
 
@@ -212,17 +217,26 @@ LAYOUT = html.Div(
         # Main Container
         html.Div(
             [
-                # Top Row: Stream Graph + Scatter Plot
+                # Row 1: Stream Graph (Full Width)
+                LINECHART_CARD,
+
+                # Row 2: Scatter Plot + Heatmaps (Side by Side)
                 html.Div(
                     [
-                        LINECHART_CARD,
                         SCATTER_PLOT_CARD,
+                        HEATMAPS_CONTAINER,
                     ],
-                    className="top-row",
+                    # Using inline grid styles to enforce a 1:1 split
+                    style={
+                        "display": "grid",
+                        "gridTemplateColumns": "1fr 1fr",
+                        "gap": "24px",
+                        "marginBottom": "24px",
+                        "alignItems": "start"
+                    },
                 ),
-                # Heatmaps Section
-                HEATMAPS_CONTAINER,
-                # Violin Chart Section
+
+                # Row 3: Violin Chart (Full Width)
                 VIOLIN_CHART_CONTAINER,
             ],
             className="main-container",
