@@ -16,20 +16,19 @@ def normalize_services(selected_services):
 
 @callback(
     Output("heatmap-main", "figure"),
-    [Input("heatmap-attribute-radio", "value"),
-     Input("services-checklist", "value")]
+    [Input("heatmap-attribute-radio", "value"), Input("services-checklist", "value")],
 )
 def update_heatmap(attribute, selected_services):
     """Update heatmap based on attribute and service selection."""
     # Pass selected_services directly - get_heatmap_data handles the logic
     z_values, x_labels, y_labels = get_heatmap_data(attribute, selected_services)
-    
+
     # Create dynamic title
     if attribute == "age_bin":
         attr_name = "Age Group"
     else:
         attr_name = "Length of Stay (Days)"
-    
+
     # Determine service name for title
     if not selected_services or "all" in selected_services:
         service_name = "All Services"
@@ -37,9 +36,9 @@ def update_heatmap(attribute, selected_services):
         service_name = SERVICES_MAPPING.get(selected_services[0], selected_services[0])
     else:
         service_name = f"{len(selected_services)} Services"
-    
+
     title = f"{attr_name} vs Patient Satisfaction ({service_name})"
-    
+
     return create_heatmap(z_values, x_labels, y_labels, title)
 
 
@@ -54,64 +53,45 @@ def update_stream_graph(selected_metrics, selected_services):
     return create_line_chart(selected_metrics, services)
 
 
-@callback(Output("violin-chart", "figure"),
-          [Input("quarter-dropdown", "value"),
-           Input("metric-checklist", "value"),
-           Input("services-checklist", "value")])
-def update_violin_chart(quarter, selected_metrics, selected_services):
+@callback(
+    Output("violin-chart", "figure"),
+    [
+        Input("violin-metric-radio", "value"),
+        Input("line-chart", "relayoutData"),
+        Input("services-checklist", "value"),
+    ],
+)
+def update_violin_chart(selected_metric, relayout_data, selected_services):
     """
     Update violin chart based on:
-    1. Quarter selection (Local filter)
-    2. Metric selection (Global filter - from Line Chart side)
+    1. Metric selection (Radio Button: Satisfaction, Morale, Ratio)
+    2. Global Time Range (from Line Chart zoom/pan)
     3. Service selection (Global filter)
     """
     from dashboard.dash_data import SERVICES_DATA, SERVICES_MAPPING
 
-    # Filter data by Quarter if needed
+    # 1. Filter by Time Range (if available)
     data = SERVICES_DATA.copy()
-    if quarter != "all":
-        # Check if SERVICES_DATA has 'week' or date column to derive quarter
-        # The sample data generation in dash_data.py generates weeks.
-        # We need to map weeks to quarters.
-        # Week 1-13: Q1, 14-26: Q2, 27-39: Q3, 40-52: Q4
-        
-        # Add a helper to get quarter from week
-        def get_quarter(week):
-            if week <= 13: return "Q1"
-            elif week <= 26: return "Q2"
-            elif week <= 39: return "Q3"
-            else: return "Q4"
-            
-        # Ensure 'week' column exists (it's named 'week' in CSV, usually lowercase)
-        # Check dash_data.py: "SERVICES_DATA = pd.read_csv(...)"
-        # And "SCATTER_DATA.rename(..., 'week': 'Week')" implies original is 'week'
-        # But 'violinchart.py' code was using "Quarter" column from random data.
-        # We need to compute it.
-        if "week" in data.columns:
-            data["Quarter"] = data["week"].apply(get_quarter)
-            data = data[data["Quarter"] == quarter]
-    
-    # Determine which metric to plot
-    # selected_metrics is a list, e.g., ["Patient Satisfaction", "Staff Morale"]
-    # We default to Satisfaction if available, else Morale, else fallback
-    metric_col = "satisfaction_from_patients"
-    
-    if selected_metrics:
-        if "Patient Satisfaction" in selected_metrics:
-            metric_col = "satisfaction_from_patients"
-        elif "Staff Morale" in selected_metrics:
-            metric_col = "staff_morale"
-    
-    # Normalize services to handle 'all' option
-    services = normalize_services(selected_services)
-    
-    return create_violin_chart(data, metric_col, services)
+
+    if relayout_data:
+        # Check for range updates
+        if "xaxis.range" in relayout_data:
+            r = relayout_data["xaxis.range"]
+            data = data[(data["week"] >= r[0]) & (data["week"] <= r[1])]
+        elif "xaxis.range[0]" in relayout_data and "xaxis.range[1]" in relayout_data:
+            data = data[
+                (data["week"] >= relayout_data["xaxis.range[0]"])
+                & (data["week"] <= relayout_data["xaxis.range[1]"])
+            ]
+
+    # 2. Call chart creator
+    # Metric logic is handled inside create_violin_chart
+    return create_violin_chart(data, selected_metric, selected_services)
 
 
 @callback(
     Output("scatter-plot", "figure"),
-    [Input("services-checklist", "value"),
-     Input("line-chart", "relayoutData")]
+    [Input("services-checklist", "value"), Input("line-chart", "relayoutData")],
 )
 def update_scatter_plot(selected_services, relayout_data):
     """
@@ -134,11 +114,14 @@ def update_scatter_plot(selected_services, relayout_data):
             time_range = (r[0], r[1])
 
         elif "xaxis.range[0]" in relayout_data and "xaxis.range[1]" in relayout_data:
-            time_range = (relayout_data["xaxis.range[0]"], relayout_data["xaxis.range[1]"])
+            time_range = (
+                relayout_data["xaxis.range[0]"],
+                relayout_data["xaxis.range[1]"],
+            )
 
         # If autorange (reset) is triggered, time_range remains None (show all)
 
     # Normalize services to handle 'all' option
     services = normalize_services(selected_services)
-    
+
     return create_scatter_plot(services, time_range)

@@ -5,7 +5,7 @@ from dashboard.style import HEATMAP_COLORSCALE, PLOTLY_TEMPLATE
 
 def create_heatmap(z_values, x_labels, y_labels, title):
     """Create a heatmap with patient count data.
-    
+
     Args:
         z_values: 2D list of patient counts
         x_labels: Labels for x-axis (satisfaction bins)
