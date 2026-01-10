@@ -4,17 +4,25 @@ from dashboard.linechart import create_line_chart
 from dashboard.scatterplot_matrix import create_scatter_plot
 from dashboard.violinchart import create_violin_chart
 from dashboard.heatmap import create_heatmap
-from dashboard.dash_data import get_heatmap_data, SERVICES_MAPPING
+from dashboard.dash_data import get_heatmap_data, SERVICES_MAPPING, SERVICES
+
+
+def normalize_services(selected_services):
+    """Convert selected_services to actual service list, handling 'all' option."""
+    if not selected_services or "all" in selected_services:
+        return SERVICES  # Return all services
+    return selected_services
 
 
 @callback(
     Output("heatmap-main", "figure"),
     [Input("heatmap-attribute-radio", "value"),
-     Input("heatmap-service-dropdown", "value")]
+     Input("services-checklist", "value")]
 )
-def update_heatmap(attribute, service):
+def update_heatmap(attribute, selected_services):
     """Update heatmap based on attribute and service selection."""
-    z_values, x_labels, y_labels = get_heatmap_data(attribute, service)
+    # Pass selected_services directly - get_heatmap_data handles the logic
+    z_values, x_labels, y_labels = get_heatmap_data(attribute, selected_services)
     
     # Create dynamic title
     if attribute == "age_bin":
@@ -22,7 +30,14 @@ def update_heatmap(attribute, service):
     else:
         attr_name = "Length of Stay (Days)"
     
-    service_name = SERVICES_MAPPING.get(service, "All Services")
+    # Determine service name for title
+    if not selected_services or "all" in selected_services:
+        service_name = "All Services"
+    elif len(selected_services) == 1:
+        service_name = SERVICES_MAPPING.get(selected_services[0], selected_services[0])
+    else:
+        service_name = f"{len(selected_services)} Services"
+    
     title = f"{attr_name} vs Patient Satisfaction ({service_name})"
     
     return create_heatmap(z_values, x_labels, y_labels, title)
@@ -34,7 +49,9 @@ def update_heatmap(attribute, service):
 )
 def update_stream_graph(selected_metrics, selected_services):
     """Update stream graph based on metric selection"""
-    return create_line_chart(selected_metrics, selected_services)
+    # Normalize services to handle 'all' option
+    services = normalize_services(selected_services)
+    return create_line_chart(selected_metrics, services)
 
 
 @callback(Output("violin-chart", "figure"),
@@ -85,7 +102,10 @@ def update_violin_chart(quarter, selected_metrics, selected_services):
         elif "Staff Morale" in selected_metrics:
             metric_col = "staff_morale"
     
-    return create_violin_chart(data, metric_col, selected_services)
+    # Normalize services to handle 'all' option
+    services = normalize_services(selected_services)
+    
+    return create_violin_chart(data, metric_col, services)
 
 
 @callback(
@@ -118,4 +138,7 @@ def update_scatter_plot(selected_services, relayout_data):
 
         # If autorange (reset) is triggered, time_range remains None (show all)
 
-    return create_scatter_plot(selected_services, time_range)
+    # Normalize services to handle 'all' option
+    services = normalize_services(selected_services)
+    
+    return create_scatter_plot(services, time_range)

@@ -143,7 +143,7 @@ def get_heatmap_data(row_attribute="age_bin", service_filter=None):
     
     Args:
         row_attribute: "age_bin" or "length_of_stay" - what to show on Y-axis
-        service_filter: None for all services, or specific service name
+        service_filter: None for all, single service name, or list of services
     
     Returns:
         tuple: (z_values, x_labels, y_labels)
@@ -151,8 +151,14 @@ def get_heatmap_data(row_attribute="age_bin", service_filter=None):
     df = PATIENTS_DATA.copy()
     
     # Apply service filter if specified
-    if service_filter and service_filter != "all":
-        df = df[df["service"] == service_filter]
+    if service_filter:
+        if isinstance(service_filter, list):
+            # Filter out 'all' if present and use remaining services
+            services = [s for s in service_filter if s != "all"]
+            if services:
+                df = df[df["service"].isin(services)]
+        elif service_filter != "all":
+            df = df[df["service"] == service_filter]
     
     # Create crosstab (count of patients in each cell)
     if row_attribute == "age_bin":

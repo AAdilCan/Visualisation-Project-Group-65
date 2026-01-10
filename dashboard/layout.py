@@ -59,8 +59,8 @@ LINECHART_CARD = html.Div(
                         ),
                         dcc.Checklist(
                             id="services-checklist",
-                            options=[{"label": label, "value": service} for service, label in SERVICES_MAPPING.items()],
-                            value=[SERVICES[0]],
+                            options=[{"label": "All Services", "value": "all"}] + [{"label": label, "value": service} for service, label in SERVICES_MAPPING.items()],
+                            value=["all"],
                             className="custom-checklist",
                         ),
                     ],
@@ -134,32 +134,6 @@ HEATMAPS_CONTAINER = html.Div(
                             value="age_bin",
                             className="custom-radio",
                             inline=True,
-                        ),
-                        html.Label(
-                            "Service:",
-                            style={
-                                "color": "#a0a0b0",
-                                "marginBottom": "8px",
-                                "marginTop": "12px",
-                                "display": "block",
-                                "fontSize": "0.8rem",
-                            },
-                        ),
-                        dcc.Dropdown(
-                            id="heatmap-service-dropdown",
-                            options=[
-                                {"label": "All Services", "value": "all"},
-                            ] + [
-                                {"label": label, "value": service}
-                                for service, label in SERVICES_MAPPING.items()
-                            ],
-                            value="all",
-                            clearable=False,
-                            style={
-                                "width": "180px",
-                                "backgroundColor": "#1a1a2e",
-                                "color": "#ffffff",
-                            },
                         ),
                     ],
                     className="heatmap-filters-container",
