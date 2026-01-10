@@ -130,21 +130,46 @@ SCATTER_DATA = SCATTER_DATA[[
 ]]
 
 
-# Heatmap Data (4 different correlation matrices)
-def generate_heatmap_data(n=8, seed=None):
-    if seed:
-        np.random.seed(seed)
-    data = np.random.randn(100, n)
-    corr = np.corrcoef(data.T)
-    return corr
+# Heatmap Data - Real Patient Data
+# Labels for heatmap axes
+SATISFACTION_BINS = ["60-70", "70-80", "80-90", "90-100"]
+AGE_BINS = ["0-10", "10-20", "20-30", "30-40", "40-50", "50-60", "60-70", "70-80", "80-90"]
+LENGTH_OF_STAY_BINS = list(range(1, 15))  # 1 to 14 days
 
 
-HEATMAP1 = generate_heatmap_data(8, 1)
-HEATMAP2 = generate_heatmap_data(8, 2)
-HEATMAP3 = generate_heatmap_data(8, 3)
-HEATMAP4 = generate_heatmap_data(8, 4)
-
-HEATMAP_LABELS = ["A", "B", "C", "D", "E", "F", "G", "H"]
+def get_heatmap_data(row_attribute="age_bin", service_filter=None):
+    """
+    Create a crosstab (patient count matrix) for heatmap visualization.
+    
+    Args:
+        row_attribute: "age_bin" or "length_of_stay" - what to show on Y-axis
+        service_filter: None for all services, or specific service name
+    
+    Returns:
+        tuple: (z_values, x_labels, y_labels)
+    """
+    df = PATIENTS_DATA.copy()
+    
+    # Apply service filter if specified
+    if service_filter and service_filter != "all":
+        df = df[df["service"] == service_filter]
+    
+    # Create crosstab (count of patients in each cell)
+    if row_attribute == "age_bin":
+        crosstab = pd.crosstab(df["age_bin"], df["satisfaction_bin"])
+        # Ensure all bins are present and in correct order
+        crosstab = crosstab.reindex(index=AGE_BINS, columns=SATISFACTION_BINS, fill_value=0)
+        y_labels = AGE_BINS
+    else:  # length_of_stay
+        crosstab = pd.crosstab(df["length_of_stay"], df["satisfaction_bin"])
+        # Ensure all values are present and in correct order
+        crosstab = crosstab.reindex(index=LENGTH_OF_STAY_BINS, columns=SATISFACTION_BINS, fill_value=0)
+        y_labels = [str(d) for d in LENGTH_OF_STAY_BINS]
+    
+    z_values = crosstab.values.tolist()
+    x_labels = SATISFACTION_BINS
+    
+    return z_values, x_labels, y_labels
 
 # Violin Chart Data
 VIOLIN_DATA = pd.DataFrame(

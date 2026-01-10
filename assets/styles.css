@@ -197,11 +197,13 @@ body::before {
 }
 
 @keyframes pulse {
+
     0%,
     100% {
         opacity: 1;
         transform: scale(1);
     }
+
     50% {
         opacity: 0.5;
         transform: scale(1.2);
@@ -303,6 +305,46 @@ body::before {
     accent-color: var(--accent-primary);
     cursor: pointer;
     margin-right: 8px;
+}
+
+/* Heatmap Filter Container */
+.heatmap-filters-container {
+    background: rgba(15, 15, 26, 0.4);
+    padding: 12px 16px;
+    border-radius: 10px;
+    border: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 200px;
+}
+
+/* Radio Button Styling */
+.custom-radio {
+    display: flex;
+    gap: 16px;
+}
+
+.custom-radio label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+}
+
+.custom-radio label:hover {
+    color: var(--text-primary);
+}
+
+.custom-radio input[type="radio"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--accent-primary);
+    cursor: pointer;
+    margin-right: 4px;
 }
 
 /* Responsive Design */
