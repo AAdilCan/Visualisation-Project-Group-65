@@ -211,7 +211,7 @@ VIOLIN_CHART_CONTAINER = html.Div(
         ),
         dcc.Graph(
             id="violin-chart",
-            figure=create_violin_chart(),
+            figure=create_violin_chart(SERVICES_DATA),
             config={"responsive": False},
             style={"height": "400px"},
         ),
