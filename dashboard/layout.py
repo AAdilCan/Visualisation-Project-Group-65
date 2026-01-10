@@ -1,6 +1,6 @@
 from dash import dcc, html
 
-from dashboard.dash_data import get_heatmap_data, SERVICES, SERVICES_MAPPING
+from dashboard.dash_data import get_heatmap_data, SERVICES, SERVICES_MAPPING, SERVICES_DATA
 from dashboard.heatmap import create_heatmap
 from dashboard.linechart import create_line_chart
 from dashboard.scatterplot_matrix import create_scatter_plot
