@@ -3,6 +3,29 @@ from dash import callback, Output, Input
 from dashboard.linechart import create_line_chart
 from dashboard.scatterplot_matrix import create_scatter_plot
 from dashboard.violinchart import create_violin_chart
+from dashboard.heatmap import create_heatmap
+from dashboard.dash_data import get_heatmap_data, SERVICES_MAPPING
+
+
+@callback(
+    Output("heatmap-main", "figure"),
+    [Input("heatmap-attribute-radio", "value"),
+     Input("heatmap-service-dropdown", "value")]
+)
+def update_heatmap(attribute, service):
+    """Update heatmap based on attribute and service selection."""
+    z_values, x_labels, y_labels = get_heatmap_data(attribute, service)
+    
+    # Create dynamic title
+    if attribute == "age_bin":
+        attr_name = "Age Group"
+    else:
+        attr_name = "Length of Stay (Days)"
+    
+    service_name = SERVICES_MAPPING.get(service, "All Services")
+    title = f"{attr_name} vs Patient Satisfaction ({service_name})"
+    
+    return create_heatmap(z_values, x_labels, y_labels, title)
 
 
 @callback(
