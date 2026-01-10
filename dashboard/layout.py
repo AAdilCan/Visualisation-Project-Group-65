@@ -1,6 +1,14 @@
 from dash import dcc, html
 
-from dashboard.dash_data import HEATMAP1, HEATMAP2, HEATMAP3, HEATMAP4, SERVICES, SERVICES_MAPPING
+from dashboard.dash_data import (
+    HEATMAP1,
+    HEATMAP2,
+    HEATMAP3,
+    HEATMAP4,
+    SERVICES,
+    SERVICES_MAPPING,
+    SERVICES_DATA,
+)
 from dashboard.heatmap import create_heatmap
 from dashboard.linechart import create_line_chart
 from dashboard.scatterplot_matrix import create_scatter_plot
@@ -195,7 +203,7 @@ VIOLIN_CHART_CONTAINER = html.Div(
         ),
         dcc.Graph(
             id="violin-chart",
-            figure=create_violin_chart(),
+            figure=create_violin_chart(SERVICES_DATA),
             config={"responsive": False},
             style={"height": "400px"},
         ),
