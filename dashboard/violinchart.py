@@ -6,83 +6,94 @@ from dashboard.style import CHART_COLORS, PLOTLY_TEMPLATE
 
 def create_violin_chart(data, metric="satisfaction_from_patients", selected_services=None):
     """
-    Create violin chart using real data
+    Create violin chart using real data, grouped by Event.
     
     Args:
-        data: pandas DataFrame containing the service data
-        metric: The column name to plot distribution for
-        selected_services: List of services to include
+        data: pandas DataFrame containing the service data.
+        metric: The column name to plot distribution for.
+        selected_services: List of services to include (optional filter).
     """
     if data is None or data.empty:
         return go.Figure()
 
-    # Filter by services if provided
+    # Filter by services if provided (Global Filter compatibility)
+    filtered_data = data.copy()
     if selected_services:
-        # Convert display names back to service keys if needed or used directly
-        # The data 'service' column has keys like 'emergency', 'ICU'
-        # The 'Category' column in other places has display names.
-        # Let's check what 'selected_services' contains.
-        # It comes from services-checklist, which has values like 'emergency', 'ICU' (keys)
-        # So we filter on 'service' column.
-        filtered_data = data[data["service"].isin(selected_services)].copy()
-    else:
-        filtered_data = data.copy()
+        filtered_data = filtered_data[filtered_data["service"].isin(selected_services)]
         
     if filtered_data.empty:
         return go.Figure()
+    
+    # Handle "Refused/Admitted Ratio" calculation on the fly
+    # metric string from RadioButton will be passed here.
+    # If metric is "ratio", we calculate it.
+    y_values = None
+    y_label = "Value"
+    
+    if metric == "ratio":
+        # Avoid division by zero
+        # We can calculate it per row
+        # Using numpy for safe division
+        import numpy as np
+        admitted = filtered_data["patients_admitted"].replace(0, 1) # simple avoidance
+        filtered_data["ratio"] = filtered_data["patients_refused"] / admitted
+        y_values = filtered_data["ratio"]
+        y_label = "Refused/Admitted Ratio"
+        plot_metric = "ratio"
+    else:
+        # For standard metrics
+        plot_metric = metric
+        if metric == "satisfaction_from_patients":
+            y_label = "Patient Satisfaction"
+        elif metric == "staff_morale":
+            y_label = "Staff Morale"
+    
+    # Event Colors
+    # "flu", "strike", "donation", "none"
+    event_colors = {
+        "flu": "#ef4444",      # Red
+        "strike": "#f59e0b",   # Amber/Orange
+        "donation": "#10b981", # Green
+        "none": "#6366f1",     # Indigo (Default)
+        # Fallback
+        "unknown": "#8b5cf6"
+    }
 
     fig = go.Figure()
 
-    # Get unique services present in the filtered data to ensure correct color mapping
-    # We map service key to index for color
-    unique_services = filtered_data["service"].unique()
-
-    for service_key in unique_services:
-        # Get data for this service
-        service_data = filtered_data[filtered_data["service"] == service_key]
+    # Get unique events
+    if "event" not in filtered_data.columns:
+        # Fallback if column missing
+        return fig
         
-        # Determine color index
-        # We find the index of this service in the global SERVICES list to keep colors consistent
-        try:
-            color_idx = SERVICES.index(service_key) % len(CHART_COLORS)
-            color = CHART_COLORS[color_idx]
-        except ValueError:
-            color = CHART_COLORS[0]
+    unique_events = filtered_data["event"].unique()
 
-        # Get display name
-        display_name = SERVICES_MAPPING.get(service_key, service_key)
-
+    for event in unique_events:
+        event_data = filtered_data[filtered_data["event"] == event]
+        color = event_colors.get(str(event).lower(), event_colors["none"])
+        event_name = str(event).capitalize()
+        
         fig.add_trace(
             go.Violin(
-                x=[display_name] * len(service_data[metric]),
-                y=service_data[metric],
-                name=display_name,
+                x=[event_name] * len(event_data),
+                y=event_data[plot_metric],
+                name=event_name,
                 box_visible=True,
                 meanline_visible=True,
                 fillcolor=f"rgba{tuple(list(px.colors.hex_to_rgb(color)) + [0.6])}",
                 line_color=color,
                 opacity=0.8,
-                hovertemplate=f"<b>{display_name}</b><br>{metric}: %{{y:.1f}}<extra></extra>",
+                hovertemplate=f"<b>{event_name}</b><br>{y_label}: %{{y:.2f}}<extra></extra>",
             )
         )
-
-    # Title update based on metric
-    # Map column name to display name for axis
-    axis_title = "Value"
-    if metric == "satisfaction_from_patients":
-        axis_title = "Patient Satisfaction Score"
-    elif metric == "staff_morale":
-        axis_title = "Staff Morale Score"
-    elif "ratio" in metric.lower():
-        axis_title = "Ratio"
 
     fig.update_layout(
         template=PLOTLY_TEMPLATE,
         height=400,
         margin=dict(l=40, r=20, t=30, b=50),
         showlegend=False,
-        xaxis_title="Service Category",
-        yaxis_title=axis_title,
+        xaxis_title="Event Type",
+        yaxis_title=y_label,
         violinmode="group",
     )
 

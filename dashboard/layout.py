@@ -184,19 +184,19 @@ VIOLIN_CHART_CONTAINER = html.Div(
         ),
         html.Div(
             [
-                html.Label("Filter by Quarter:", style={"color": "#a0a0b0", "marginRight": "15px"}),
-                dcc.Dropdown(
-                    id="quarter-dropdown",
+                html.Label("Metric:", style={"color": "#a0a0b0", "marginRight": "15px"}),
+                dcc.RadioItems(
+                    id="violin-metric-radio",
                     options=[
-                        {"label": "All Quarters", "value": "all"},
-                        {"label": "Q1", "value": "Q1"},
-                        {"label": "Q2", "value": "Q2"},
-                        {"label": "Q3", "value": "Q3"},
-                        {"label": "Q4", "value": "Q4"},
+                        {"label": "Patient Satisfaction", "value": "satisfaction_from_patients"},
+                        {"label": "Staff Morale", "value": "staff_morale"},
+                        {"label": "Refused/Admitted Ratio", "value": "ratio"},
                     ],
-                    value="all",
-                    clearable=False,
-                    style={"width": "200px", "backgroundColor": "#1a1a2e", "color": "#ffffff"},
+                    value="satisfaction_from_patients",
+                    inline=True,
+                    style={"color": "#ffffff"},
+                    inputStyle={"marginRight": "5px", "marginLeft": "15px"},
+                    labelStyle={"display": "flex", "alignItems": "center"},
                 ),
             ],
             style={"marginBottom": "20px", "display": "flex", "alignItems": "center"},
@@ -222,6 +222,7 @@ LAYOUT = html.Div(
             ],
             className="dashboard-header",
         ),
+        dcc.Store(id="global-week-store"),
         # Main Container
         html.Div(
             [
