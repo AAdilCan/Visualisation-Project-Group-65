@@ -55,57 +55,33 @@ def update_stream_graph(selected_metrics, selected_services):
 
 
 @callback(Output("violin-chart", "figure"),
-          [Input("quarter-dropdown", "value"),
-           Input("metric-checklist", "value"),
+          [Input("violin-metric-radio", "value"),
+           Input("line-chart", "relayoutData"),
            Input("services-checklist", "value")])
-def update_violin_chart(quarter, selected_metrics, selected_services):
+def update_violin_chart(selected_metric, relayout_data, selected_services):
     """
     Update violin chart based on:
-    1. Quarter selection (Local filter)
-    2. Metric selection (Global filter - from Line Chart side)
+    1. Metric selection (Radio Button: Satisfaction, Morale, Ratio)
+    2. Global Time Range (from Line Chart zoom/pan)
     3. Service selection (Global filter)
     """
     from dashboard.dash_data import SERVICES_DATA, SERVICES_MAPPING
 
-    # Filter data by Quarter if needed
+    # 1. Filter by Time Range (if available)
     data = SERVICES_DATA.copy()
-    if quarter != "all":
-        # Check if SERVICES_DATA has 'week' or date column to derive quarter
-        # The sample data generation in dash_data.py generates weeks.
-        # We need to map weeks to quarters.
-        # Week 1-13: Q1, 14-26: Q2, 27-39: Q3, 40-52: Q4
-        
-        # Add a helper to get quarter from week
-        def get_quarter(week):
-            if week <= 13: return "Q1"
-            elif week <= 26: return "Q2"
-            elif week <= 39: return "Q3"
-            else: return "Q4"
-            
-        # Ensure 'week' column exists (it's named 'week' in CSV, usually lowercase)
-        # Check dash_data.py: "SERVICES_DATA = pd.read_csv(...)"
-        # And "SCATTER_DATA.rename(..., 'week': 'Week')" implies original is 'week'
-        # But 'violinchart.py' code was using "Quarter" column from random data.
-        # We need to compute it.
-        if "week" in data.columns:
-            data["Quarter"] = data["week"].apply(get_quarter)
-            data = data[data["Quarter"] == quarter]
     
-    # Determine which metric to plot
-    # selected_metrics is a list, e.g., ["Patient Satisfaction", "Staff Morale"]
-    # We default to Satisfaction if available, else Morale, else fallback
-    metric_col = "satisfaction_from_patients"
+    if relayout_data:
+        # Check for range updates
+        if "xaxis.range" in relayout_data:
+            r = relayout_data["xaxis.range"]
+            data = data[(data["week"] >= r[0]) & (data["week"] <= r[1])]
+        elif "xaxis.range[0]" in relayout_data and "xaxis.range[1]" in relayout_data:
+            data = data[(data["week"] >= relayout_data["xaxis.range[0]"]) & 
+                       (data["week"] <= relayout_data["xaxis.range[1]"])]
     
-    if selected_metrics:
-        if "Patient Satisfaction" in selected_metrics:
-            metric_col = "satisfaction_from_patients"
-        elif "Staff Morale" in selected_metrics:
-            metric_col = "staff_morale"
-    
-    # Normalize services to handle 'all' option
-    services = normalize_services(selected_services)
-    
-    return create_violin_chart(data, metric_col, services)
+    # 2. Call chart creator
+    # Metric logic is handled inside create_violin_chart
+    return create_violin_chart(data, selected_metric, selected_services)
 
 
 @callback(

@@ -3,20 +3,19 @@ from plotly import graph_objects as go
 from dashboard.style import HEATMAP_COLORSCALE, PLOTLY_TEMPLATE
 
 
-def create_heatmap(z_values, x_labels, y_labels, title):
-    """Create a heatmap with patient count data.
+def create_heatmap(data, title, labels=None):
+    """Create a single heatmap"""
     
-    Args:
-        z_values: 2D list of patient counts
-        x_labels: Labels for x-axis (satisfaction bins)
-        y_labels: Labels for y-axis (age bins or length of stay)
-        title: Title for the heatmap
-    """
+    if labels is None:
+        plot_labels = HEATMAP_LABELS
+    else:
+        plot_labels = labels
+
     fig = go.Figure(
         data=go.Heatmap(
-            z=z_values,
-            x=x_labels,
-            y=y_labels,
+            z=data,
+            x=plot_labels,
+            y=plot_labels,
             colorscale=HEATMAP_COLORSCALE,
             showscale=True,
             colorbar=dict(
@@ -31,15 +30,17 @@ def create_heatmap(z_values, x_labels, y_labels, title):
     annotations = []
     for i, row in enumerate(z_values):
         for j, val in enumerate(row):
-            annotations.append(
-                dict(
-                    x=x_labels[j],
-                    y=y_labels[i],
-                    text=str(val),
-                    showarrow=False,
-                    font=dict(color="white" if val > 15 else "#a0a0b0", size=10),
+            # Ensure we don't go out of bounds if data dimensions don't match labels
+            if i < len(plot_labels) and j < len(plot_labels):
+                annotations.append(
+                    dict(
+                        x=plot_labels[j],
+                        y=plot_labels[i],
+                        text=f"{val:.2f}",
+                        showarrow=False,
+                        font=dict(color="white" if abs(val) > 0.5 else "#a0a0b0", size=9),
+                    )
                 )
-            )
 
     fig.update_layout(
         template=PLOTLY_TEMPLATE,
