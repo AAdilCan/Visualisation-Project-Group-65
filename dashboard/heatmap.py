@@ -1,6 +1,5 @@
-from plotly.subplots import go
+from plotly import graph_objects as go
 
-from dashboard.dash_data import HEATMAP_LABELS
 from dashboard.style import HEATMAP_COLORSCALE, PLOTLY_TEMPLATE
 
 
@@ -18,14 +17,18 @@ def create_heatmap(data, title, labels=None):
             x=plot_labels,
             y=plot_labels,
             colorscale=HEATMAP_COLORSCALE,
-            showscale=False,
-            hovertemplate="%{x} vs %{y}<br>Correlation: %{z:.2f}<extra></extra>",
+            showscale=True,
+            colorbar=dict(
+                title=dict(text="Patients", side="right"),
+                tickfont=dict(color="#a0a0b0"),
+            ),
+            hovertemplate="%{y} × %{x}<br>Patients: %{z}<extra></extra>",
         )
     )
 
-    # Add correlation values as text
+    # Add patient count as text annotations
     annotations = []
-    for i, row in enumerate(data):
+    for i, row in enumerate(z_values):
         for j, val in enumerate(row):
             # Ensure we don't go out of bounds if data dimensions don't match labels
             if i < len(plot_labels) and j < len(plot_labels):
@@ -41,9 +44,18 @@ def create_heatmap(data, title, labels=None):
 
     fig.update_layout(
         template=PLOTLY_TEMPLATE,
-        height=250,
-        margin=dict(l=40, r=20, t=40, b=40),
-        title=dict(text=title, font=dict(size=14), x=0.5),
+        height=450,
+        margin=dict(l=60, r=20, t=50, b=50),
+        title=dict(text=title, font=dict(size=16), x=0.5),
+        xaxis=dict(
+            title=dict(text="Patient Satisfaction", font=dict(size=12)),
+            tickfont=dict(size=11),
+        ),
+        yaxis=dict(
+            title="",
+            tickfont=dict(size=11),
+            autorange="reversed",  # Top to bottom for age groups
+        ),
         annotations=annotations,
     )
 

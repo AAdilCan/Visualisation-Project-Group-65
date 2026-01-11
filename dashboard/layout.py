@@ -1,14 +1,6 @@
 from dash import dcc, html
 
-from dashboard.dash_data import (
-    HEATMAP1,
-    HEATMAP2,
-    HEATMAP3,
-    HEATMAP4,
-    SERVICES,
-    SERVICES_MAPPING,
-    SERVICES_DATA,
-)
+from dashboard.dash_data import get_heatmap_data, SERVICES, SERVICES_MAPPING, SERVICES_DATA
 from dashboard.heatmap import create_heatmap
 from dashboard.linechart import create_line_chart
 from dashboard.scatterplot_matrix import create_scatter_plot
@@ -67,8 +59,8 @@ LINECHART_CARD = html.Div(
                         ),
                         dcc.Checklist(
                             id="services-checklist",
-                            options=[{"label": label, "value": service} for service, label in SERVICES_MAPPING.items()],
-                            value=[SERVICES[0]],
+                            options=[{"label": "All Services", "value": "all"}] + [{"label": label, "value": service} for service, label in SERVICES_MAPPING.items()],
+                            value=["all"],
                             className="custom-checklist",
                         ),
                     ],
@@ -115,58 +107,48 @@ HEATMAPS_CONTAINER = html.Div(
     [
         html.Div(
             [
-                html.H3("Correlation Heatmaps"),
-                html.P("Four correlation matrices showing relationships between variables"),
-            ]
-        ),
-        html.Div(
-            [
                 html.Div(
                     [
-                        dcc.Graph(
-                            id="heatmap-1",
-                            figure=create_heatmap(HEATMAP1, "Dataset A"),
-                            config={"responsive": False},
-                            style={"height": "250px"},
-                        )
+                        html.H3("Patient Satisfaction Heatmap"),
+                        html.P("Distribution of patients across satisfaction levels"),
                     ],
-                    className="heatmap-card",
+                    style={"flex": "1"},
                 ),
                 html.Div(
                     [
-                        dcc.Graph(
-                            id="heatmap-2",
-                            figure=create_heatmap(HEATMAP2, "Dataset B"),
-                            config={"responsive": False},
-                            style={"height": "250px"},
-                        )
+                        html.Label(
+                            "Group By:",
+                            style={
+                                "color": "#a0a0b0",
+                                "marginBottom": "8px",
+                                "display": "block",
+                                "fontSize": "0.8rem",
+                            },
+                        ),
+                        dcc.RadioItems(
+                            id="heatmap-attribute-radio",
+                            options=[
+                                {"label": "Age Group", "value": "age_bin"},
+                                {"label": "Length of Stay", "value": "length_of_stay"},
+                            ],
+                            value="age_bin",
+                            className="custom-radio",
+                            inline=True,
+                        ),
                     ],
-                    className="heatmap-card",
-                ),
-                html.Div(
-                    [
-                        dcc.Graph(
-                            id="heatmap-3",
-                            figure=create_heatmap(HEATMAP3, "Dataset C"),
-                            config={"responsive": False},
-                            style={"height": "250px"},
-                        )
-                    ],
-                    className="heatmap-card",
-                ),
-                html.Div(
-                    [
-                        dcc.Graph(
-                            id="heatmap-4",
-                            figure=create_heatmap(HEATMAP4, "Dataset D"),
-                            config={"responsive": False},
-                            style={"height": "250px"},
-                        )
-                    ],
-                    className="heatmap-card",
+                    className="heatmap-filters-container",
                 ),
             ],
-            className="heatmaps-container",
+            className="graph-card-header",
+        ),
+        dcc.Graph(
+            id="heatmap-main",
+            figure=create_heatmap(
+                *get_heatmap_data("age_bin", None),
+                "Age Group vs Patient Satisfaction"
+            ),
+            config={"responsive": False},
+            style={"height": "500px"},
         ),
     ],
     className="graph-card",
