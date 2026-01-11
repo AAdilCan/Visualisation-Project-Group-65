@@ -3,19 +3,21 @@ from plotly import graph_objects as go
 from dashboard.style import HEATMAP_COLORSCALE, PLOTLY_TEMPLATE
 
 
-def create_heatmap(data, title, labels=None):
-    """Create a single heatmap"""
+def create_heatmap(z_values, x_labels, y_labels, title):
+    """Create a single heatmap
     
-    if labels is None:
-        plot_labels = HEATMAP_LABELS
-    else:
-        plot_labels = labels
+    Args:
+        z_values: 2D list of values for the heatmap
+        x_labels: Labels for the x-axis (columns)
+        y_labels: Labels for the y-axis (rows)
+        title: Title for the heatmap
+    """
 
     fig = go.Figure(
         data=go.Heatmap(
-            z=data,
-            x=plot_labels,
-            y=plot_labels,
+            z=z_values,
+            x=x_labels,
+            y=y_labels,
             colorscale=HEATMAP_COLORSCALE,
             showscale=True,
             colorbar=dict(
@@ -31,14 +33,14 @@ def create_heatmap(data, title, labels=None):
     for i, row in enumerate(z_values):
         for j, val in enumerate(row):
             # Ensure we don't go out of bounds if data dimensions don't match labels
-            if i < len(plot_labels) and j < len(plot_labels):
+            if i < len(y_labels) and j < len(x_labels):
                 annotations.append(
                     dict(
-                        x=plot_labels[j],
-                        y=plot_labels[i],
-                        text=f"{val:.2f}",
+                        x=x_labels[j],
+                        y=y_labels[i],
+                        text=str(val),
                         showarrow=False,
-                        font=dict(color="white" if abs(val) > 0.5 else "#a0a0b0", size=9),
+                        font=dict(color="white" if val > 5 else "#a0a0b0", size=9),
                     )
                 )
 
