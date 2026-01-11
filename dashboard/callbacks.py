@@ -1,4 +1,4 @@
-from dash import callback, Output, Input
+from dash import callback, Output, Input, State
 
 from dashboard.linechart import create_line_chart
 from dashboard.scatterplot_matrix import create_scatter_plot
@@ -16,13 +16,15 @@ def normalize_services(selected_services):
 
 @callback(
     Output("heatmap-main", "figure"),
-    [Input("heatmap-attribute-radio", "value"),
-     Input("services-checklist", "value"),
-     Input("line-chart", "relayoutData")]
+    [
+        Input("heatmap-attribute-radio", "value"),
+        Input("services-checklist", "value"),
+        Input("line-chart", "relayoutData"),
+    ],
 )
 def update_heatmap(attribute, selected_services, relayout_data):
     """Update heatmap based on attribute, service selection, and time range."""
-    
+
     # Extract week range from line chart selection
     week_range = None
     if relayout_data:
@@ -30,18 +32,23 @@ def update_heatmap(attribute, selected_services, relayout_data):
             r = relayout_data["xaxis.range"]
             week_range = (r[0], r[1])
         elif "xaxis.range[0]" in relayout_data and "xaxis.range[1]" in relayout_data:
-            week_range = (relayout_data["xaxis.range[0]"], relayout_data["xaxis.range[1]"])
+            week_range = (
+                relayout_data["xaxis.range[0]"],
+                relayout_data["xaxis.range[1]"],
+            )
         # If autorange (reset) is triggered, week_range remains None (show all)
-    
+
     # Get heatmap data with filters applied
-    z_values, x_labels, y_labels = get_heatmap_data(attribute, selected_services, week_range)
-    
+    z_values, x_labels, y_labels = get_heatmap_data(
+        attribute, selected_services, week_range
+    )
+
     # Create dynamic title
     if attribute == "age_bin":
         attr_name = "Age Group"
     else:
         attr_name = "Length of Stay (Days)"
-    
+
     # Determine service name for title
     if not selected_services or "all" in selected_services:
         service_name = "All Services"
@@ -49,33 +56,50 @@ def update_heatmap(attribute, selected_services, relayout_data):
         service_name = SERVICES_MAPPING.get(selected_services[0], selected_services[0])
     else:
         service_name = f"{len(selected_services)} Services"
-    
+
     # Add week range to title if filtered
     if week_range:
         week_info = f", Weeks {int(week_range[0])}-{int(week_range[1])}"
     else:
         week_info = ""
-    
+
     title = f"{attr_name} vs Patient Satisfaction ({service_name}{week_info})"
-    
+
     return create_heatmap(z_values, x_labels, y_labels, title)
 
 
 @callback(
     Output("line-chart", "figure"),
     [Input("metric-checklist", "value"), Input("services-checklist", "value")],
+    [State("line-chart", "relayoutData")],
 )
-def update_stream_graph(selected_metrics, selected_services):
-    """Update stream graph based on metric selection"""
+def update_stream_graph(selected_metrics, selected_services, relayout_data):
+    """Update stream graph based on metric selection, preserving x-axis range (weeks)"""
     # Normalize services to handle 'all' option
     services = normalize_services(selected_services)
-    return create_line_chart(selected_metrics, services)
+
+    # Extract x-axis range from relayout_data to preserve zoom/pan state
+    xaxis_range = None
+    if relayout_data:
+        if "xaxis.range" in relayout_data:
+            xaxis_range = relayout_data["xaxis.range"]
+        elif "xaxis.range[0]" in relayout_data and "xaxis.range[1]" in relayout_data:
+            xaxis_range = [
+                relayout_data["xaxis.range[0]"],
+                relayout_data["xaxis.range[1]"],
+            ]
+
+    return create_line_chart(selected_metrics, services, xaxis_range)
 
 
-@callback(Output("violin-chart", "figure"),
-          [Input("violin-metric-radio", "value"),
-           Input("line-chart", "relayoutData"),
-           Input("services-checklist", "value")])
+@callback(
+    Output("violin-chart", "figure"),
+    [
+        Input("violin-metric-radio", "value"),
+        Input("line-chart", "relayoutData"),
+        Input("services-checklist", "value"),
+    ],
+)
 def update_violin_chart(selected_metric, relayout_data, selected_services):
     """
     Update violin chart based on:
@@ -87,16 +111,18 @@ def update_violin_chart(selected_metric, relayout_data, selected_services):
 
     # 1. Filter by Time Range (if available)
     data = SERVICES_DATA.copy()
-    
+
     if relayout_data:
         # Check for range updates
         if "xaxis.range" in relayout_data:
             r = relayout_data["xaxis.range"]
             data = data[(data["week"] >= r[0]) & (data["week"] <= r[1])]
         elif "xaxis.range[0]" in relayout_data and "xaxis.range[1]" in relayout_data:
-            data = data[(data["week"] >= relayout_data["xaxis.range[0]"]) & 
-                       (data["week"] <= relayout_data["xaxis.range[1]"])]
-    
+            data = data[
+                (data["week"] >= relayout_data["xaxis.range[0]"])
+                & (data["week"] <= relayout_data["xaxis.range[1]"])
+            ]
+
     # 2. Call chart creator
     # Metric logic is handled inside create_violin_chart
     return create_violin_chart(data, selected_metric, selected_services)
@@ -104,8 +130,7 @@ def update_violin_chart(selected_metric, relayout_data, selected_services):
 
 @callback(
     Output("scatter-plot", "figure"),
-    [Input("services-checklist", "value"),
-     Input("line-chart", "relayoutData")]
+    [Input("services-checklist", "value"), Input("line-chart", "relayoutData")],
 )
 def update_scatter_plot(selected_services, relayout_data):
     """
@@ -128,11 +153,14 @@ def update_scatter_plot(selected_services, relayout_data):
             time_range = (r[0], r[1])
 
         elif "xaxis.range[0]" in relayout_data and "xaxis.range[1]" in relayout_data:
-            time_range = (relayout_data["xaxis.range[0]"], relayout_data["xaxis.range[1]"])
+            time_range = (
+                relayout_data["xaxis.range[0]"],
+                relayout_data["xaxis.range[1]"],
+            )
 
         # If autorange (reset) is triggered, time_range remains None (show all)
 
     # Normalize services to handle 'all' option
     services = normalize_services(selected_services)
-    
+
     return create_scatter_plot(services, time_range)

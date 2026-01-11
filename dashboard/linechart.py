@@ -1,7 +1,12 @@
 import plotly.express as px
 from plotly.subplots import go
 from dashboard.dash_data import STREAM_DATA
-from dashboard.style import CHART_COLORS, PLOTLY_TEMPLATE, MAIN_COLORS, STREAM_GRAPH_COLORS
+from dashboard.style import (
+    CHART_COLORS,
+    PLOTLY_TEMPLATE,
+    MAIN_COLORS,
+    STREAM_GRAPH_COLORS,
+)
 
 
 def _create_lines(fig, selected_metrics, selected_services, metric_labels):
@@ -13,7 +18,11 @@ def _create_lines(fig, selected_metrics, selected_services, metric_labels):
 
         for j, metric in enumerate(selected_metrics):
             # Use different line styles if multiple metrics are selected
-            line_style = dict(width=2, color=CHART_COLORS[i % num_available_colors], dash="solid" if j == 0 else "dash")
+            line_style = dict(
+                width=2,
+                color=CHART_COLORS[i % num_available_colors],
+                dash="solid" if j == 0 else "dash",
+            )
 
             fig.add_trace(
                 go.Scatter(
@@ -23,7 +32,8 @@ def _create_lines(fig, selected_metrics, selected_services, metric_labels):
                     mode="lines+markers",
                     line=line_style,
                     hovertemplate=(
-                        f"<b>{cat}</b><br>{metric_labels[metric]}<br>" "Week: %{x}<br>Value: %{y:.1f}<extra></extra>"
+                        f"<b>{cat}</b><br>{metric_labels[metric]}<br>"
+                        "Week: %{x}<br>Value: %{y:.1f}<extra></extra>"
                     ),
                 )
             )
@@ -37,9 +47,14 @@ def _create_lines(fig, selected_metrics, selected_services, metric_labels):
                 y=avg_by_week[metric],
                 name=f"Avg - {metric_labels[metric]}",
                 mode="lines",
-                line=dict(color=MAIN_COLORS["text"], width=3, dash="dot" if j == 0 else "longdashdot"),
+                line=dict(
+                    color=MAIN_COLORS["text"],
+                    width=3,
+                    dash="dot" if j == 0 else "longdashdot",
+                ),
                 hovertemplate=(
-                    f"<b>Average {metric_labels[metric]}</b><br>" "Week: %{x}<br>Value: %{y:.1f}<extra></extra>"
+                    f"<b>Average {metric_labels[metric]}</b><br>"
+                    "Week: %{x}<br>Value: %{y:.1f}<extra></extra>"
                 ),
             )
         )
@@ -56,7 +71,12 @@ def _create_stream_graph(fig, selected_services):
         return
 
     # Sum values by Week for all selected services
-    metrics = ["Available Beds", "Patient Requests", "Patient Admissions", "Patient Refusals"]
+    metrics = [
+        "Available Beds",
+        "Patient Requests",
+        "Patient Admissions",
+        "Patient Refusals",
+    ]
     stream_df = filtered_df.groupby("Week")[metrics].sum().reset_index()
 
     # Calculate scaling factor to keep total height around 0-55
@@ -106,24 +126,47 @@ def _create_stream_graph(fig, selected_services):
         )
 
 
-def create_line_chart(selected_metrics, selected_services):
-    """Create line chart for each service with an average overlay"""
+def create_line_chart(selected_metrics, selected_services, xaxis_range=None):
+    """Create line chart for each service with an average overlay
+
+    Args:
+        selected_metrics: List of metrics to display
+        selected_services: List of services to display
+        xaxis_range: Optional list [min, max] to preserve x-axis zoom state (weeks)
+    """
 
     fig = go.Figure()
 
     # Metric display names for labels
-    metric_labels = {"Patient Satisfaction": "Patient Satisfaction", "Staff Morale": "Staff Morale"}
+    metric_labels = {
+        "Patient Satisfaction": "Patient Satisfaction",
+        "Staff Morale": "Staff Morale",
+    }
 
     _create_stream_graph(fig, selected_services)
     _create_lines(fig, selected_metrics, selected_services, metric_labels)
+
+    # Build xaxis config, preserving range if provided
+    xaxis_config = dict(rangeslider=dict(visible=True), type="linear")
+    if xaxis_range is not None:
+        xaxis_config["range"] = xaxis_range
 
     fig.update_layout(
         template=PLOTLY_TEMPLATE,
         height=600,
         margin=dict(l=50, r=30, t=30, b=30),
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5, font=dict(size=10)),
-        xaxis=dict(rangeslider=dict(visible=True), type="linear"),
-        yaxis=dict(title="Metric Value", range=[0, 100], tickvals=[60, 70, 80, 90, 100]),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="center",
+            x=0.5,
+            font=dict(size=10),
+        ),
+        xaxis=xaxis_config,
+        yaxis=dict(
+            title="Metric Value", range=[0, 100], tickvals=[60, 70, 80, 90, 100]
+        ),
         hovermode="x unified",
     )
 
