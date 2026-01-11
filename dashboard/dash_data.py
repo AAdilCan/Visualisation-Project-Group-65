@@ -137,18 +137,24 @@ AGE_BINS = ["0-10", "10-20", "20-30", "30-40", "40-50", "50-60", "60-70", "70-80
 LENGTH_OF_STAY_BINS = list(range(1, 15))  # 1 to 14 days
 
 
-def get_heatmap_data(row_attribute="age_bin", service_filter=None):
+def get_heatmap_data(row_attribute="age_bin", service_filter=None, week_range=None):
     """
     Create a crosstab (patient count matrix) for heatmap visualization.
     
     Args:
         row_attribute: "age_bin" or "length_of_stay" - what to show on Y-axis
         service_filter: None for all, single service name, or list of services
+        week_range: Optional tuple (min_week, max_week) to filter by weeks
     
     Returns:
         tuple: (z_values, x_labels, y_labels)
     """
     df = PATIENTS_DATA.copy()
+    
+    # Apply week range filter if specified
+    if week_range is not None:
+        min_week, max_week = week_range
+        df = df[(df["week"] >= min_week) & (df["week"] <= max_week)]
     
     # Apply service filter if specified
     if service_filter:

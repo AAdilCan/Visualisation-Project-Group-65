@@ -17,12 +17,24 @@ def normalize_services(selected_services):
 @callback(
     Output("heatmap-main", "figure"),
     [Input("heatmap-attribute-radio", "value"),
-     Input("services-checklist", "value")]
+     Input("services-checklist", "value"),
+     Input("line-chart", "relayoutData")]
 )
-def update_heatmap(attribute, selected_services):
-    """Update heatmap based on attribute and service selection."""
-    # Pass selected_services directly - get_heatmap_data handles the logic
-    z_values, x_labels, y_labels = get_heatmap_data(attribute, selected_services)
+def update_heatmap(attribute, selected_services, relayout_data):
+    """Update heatmap based on attribute, service selection, and time range."""
+    
+    # Extract week range from line chart selection
+    week_range = None
+    if relayout_data:
+        if "xaxis.range" in relayout_data:
+            r = relayout_data["xaxis.range"]
+            week_range = (r[0], r[1])
+        elif "xaxis.range[0]" in relayout_data and "xaxis.range[1]" in relayout_data:
+            week_range = (relayout_data["xaxis.range[0]"], relayout_data["xaxis.range[1]"])
+        # If autorange (reset) is triggered, week_range remains None (show all)
+    
+    # Get heatmap data with filters applied
+    z_values, x_labels, y_labels = get_heatmap_data(attribute, selected_services, week_range)
     
     # Create dynamic title
     if attribute == "age_bin":
@@ -38,7 +50,13 @@ def update_heatmap(attribute, selected_services):
     else:
         service_name = f"{len(selected_services)} Services"
     
-    title = f"{attr_name} vs Patient Satisfaction ({service_name})"
+    # Add week range to title if filtered
+    if week_range:
+        week_info = f", Weeks {int(week_range[0])}-{int(week_range[1])}"
+    else:
+        week_info = ""
+    
+    title = f"{attr_name} vs Patient Satisfaction ({service_name}{week_info})"
     
     return create_heatmap(z_values, x_labels, y_labels, title)
 
