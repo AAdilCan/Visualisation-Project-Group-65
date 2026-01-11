@@ -153,8 +153,11 @@ def get_heatmap_data(row_attribute="age_bin", service_filter=None, week_range=No
     
     # Apply week range filter if specified
     if week_range is not None:
-        min_week, max_week = week_range
-        df = df[(df["week"] >= min_week) & (df["week"] <= max_week)]
+        try:
+            min_week, max_week = week_range
+            df = df[(df["week"] >= min_week) & (df["week"] <= max_week)]
+        except (ValueError, TypeError):
+            pass  # Invalid week_range, skip filtering
     
     # Apply service filter if specified
     if service_filter:

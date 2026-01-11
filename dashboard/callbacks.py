@@ -52,7 +52,10 @@ def update_heatmap(attribute, selected_services, relayout_data):
     
     # Add week range to title if filtered
     if week_range:
-        week_info = f", Weeks {int(week_range[0])}-{int(week_range[1])}"
+        try:
+            week_info = f", Weeks {int(week_range[0])}-{int(week_range[1])}"
+        except (ValueError, TypeError):
+            week_info = ""
     else:
         week_info = ""
     
