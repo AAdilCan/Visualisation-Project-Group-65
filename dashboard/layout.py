@@ -1,6 +1,11 @@
 from dash import dcc, html
 
-from dashboard.dash_data import get_heatmap_data, SERVICES, SERVICES_MAPPING, SERVICES_DATA
+from dashboard.dash_data import (
+    get_heatmap_data,
+    SERVICES,
+    SERVICES_MAPPING,
+    SERVICES_DATA,
+)
 from dashboard.heatmap import create_heatmap
 from dashboard.linechart import create_line_chart
 from dashboard.scatterplot_matrix import create_scatter_plot
@@ -13,9 +18,13 @@ LINECHART_CARD = html.Div(
                 html.Div(
                     [
                         html.H3("Services Weekly Performance"),
-                        html.P("Satisfaction Metrics for services" " against Patient Admissions and Bed Availability"),
                         html.P(
-                            "* The scale for the streamgraph " "is not aligned with the metric scores.",
+                            "Satisfaction Metrics for services"
+                            " against Patient Admissions and Bed Availability"
+                        ),
+                        html.P(
+                            "* The scale for the streamgraph "
+                            "is not aligned with the metric scores.",
                             style={
                                 "color": "#6b7280",
                                 "fontSize": "0.75rem",
@@ -59,8 +68,11 @@ LINECHART_CARD = html.Div(
                         ),
                         dcc.Checklist(
                             id="services-checklist",
-                            options=[{"label": "All Services", "value": "all"}] + [{"label": label, "value": service} for service, label in SERVICES_MAPPING.items()],
-                            value=["all"],
+                            options=[
+                                {"label": label, "value": service}
+                                for service, label in SERVICES_MAPPING.items()
+                            ],
+                            value=SERVICES,
                             className="custom-checklist",
                         ),
                     ],
@@ -99,7 +111,7 @@ SCATTER_PLOT_CARD = html.Div(
     ],
     className="graph-card",
     # Ensure the card itself fills the height of the grid cell
-    style={"height": "100%"}
+    style={"height": "100%"},
 )
 
 
@@ -144,15 +156,14 @@ HEATMAPS_CONTAINER = html.Div(
         dcc.Graph(
             id="heatmap-main",
             figure=create_heatmap(
-                *get_heatmap_data("age_bin", None),
-                "Age Group vs Patient Satisfaction"
+                *get_heatmap_data("age_bin", None), "Age Group vs Patient Satisfaction"
             ),
             config={"responsive": True},
             style={"flex": "1"},
         ),
     ],
     className="graph-card",
-    style={"height": "100%", "display": "flex", "flexDirection": "column"}
+    style={"height": "100%", "display": "flex", "flexDirection": "column"},
 )
 
 
@@ -166,11 +177,16 @@ VIOLIN_CHART_CONTAINER = html.Div(
         ),
         html.Div(
             [
-                html.Label("Metric:", style={"color": "#a0a0b0", "marginRight": "15px"}),
+                html.Label(
+                    "Metric:", style={"color": "#a0a0b0", "marginRight": "15px"}
+                ),
                 dcc.RadioItems(
                     id="violin-metric-radio",
                     options=[
-                        {"label": "Patient Satisfaction", "value": "satisfaction_from_patients"},
+                        {
+                            "label": "Patient Satisfaction",
+                            "value": "satisfaction_from_patients",
+                        },
                         {"label": "Staff Morale", "value": "staff_morale"},
                         {"label": "Refused/Admitted Ratio", "value": "ratio"},
                     ],
@@ -200,7 +216,9 @@ LAYOUT = html.Div(
         html.Div(
             [
                 html.H1("Data Analysis & Visualization Dashboard"),
-                html.P("Explore interactive visualizations with real-time data insights"),
+                html.P(
+                    "Explore interactive visualizations with real-time data insights"
+                ),
             ],
             className="dashboard-header",
         ),
@@ -210,7 +228,6 @@ LAYOUT = html.Div(
             [
                 # Row 1: Stream Graph (Full Width)
                 LINECHART_CARD,
-
                 # Row 2: Scatter Plot + Heatmaps (Side by Side)
                 html.Div(
                     [
@@ -223,10 +240,9 @@ LAYOUT = html.Div(
                         "gridTemplateColumns": "1fr 1fr",
                         "gap": "24px",
                         "marginBottom": "24px",
-                        "alignItems": "stretch"
+                        "alignItems": "stretch",
                     },
                 ),
-
                 # Row 3: Violin Chart (Full Width)
                 VIOLIN_CHART_CONTAINER,
             ],
@@ -238,7 +254,11 @@ LAYOUT = html.Div(
                 html.P(
                     [
                         "Data Visualization Project - Group 65 | Built with ",
-                        html.A("Dash & Plotly", href="https://plotly.com/dash/", target="_blank"),
+                        html.A(
+                            "Dash & Plotly",
+                            href="https://plotly.com/dash/",
+                            target="_blank",
+                        ),
                     ]
                 )
             ],
