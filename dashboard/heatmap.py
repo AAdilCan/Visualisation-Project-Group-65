@@ -46,7 +46,6 @@ def create_heatmap(z_values, x_labels, y_labels, title):
 
     fig.update_layout(
         template=PLOTLY_TEMPLATE,
-        height=450,
         margin=dict(l=60, r=20, t=50, b=50),
         title=dict(text=title, font=dict(size=16), x=0.5),
         xaxis=dict(

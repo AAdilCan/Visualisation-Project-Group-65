@@ -147,12 +147,12 @@ HEATMAPS_CONTAINER = html.Div(
                 *get_heatmap_data("age_bin", None),
                 "Age Group vs Patient Satisfaction"
             ),
-            config={"responsive": False},
-            style={"height": "500px"},
+            config={"responsive": True},
+            style={"flex": "1"},
         ),
     ],
     className="graph-card",
-    style={"height": "100%"}
+    style={"height": "100%", "display": "flex", "flexDirection": "column"}
 )
 
 
@@ -223,7 +223,7 @@ LAYOUT = html.Div(
                         "gridTemplateColumns": "1fr 1fr",
                         "gap": "24px",
                         "marginBottom": "24px",
-                        "alignItems": "start"
+                        "alignItems": "stretch"
                     },
                 ),
 
