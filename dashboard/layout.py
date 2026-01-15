@@ -59,8 +59,8 @@ LINECHART_CARD = html.Div(
                         ),
                         dcc.Checklist(
                             id="services-checklist",
-                            options=[{"label": "All Services", "value": "all"}] + [{"label": label, "value": service} for service, label in SERVICES_MAPPING.items()],
-                            value=["all"],
+                            options=[{"label": label, "value": service} for service, label in SERVICES_MAPPING.items()],
+                            value=SERVICES,
                             className="custom-checklist",
                         ),
                     ],
