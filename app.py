@@ -9,7 +9,7 @@ import dashboard.callbacks  # noqa: F401, Import callbacks to register them
 
 # ============================================
 # INITIALIZE DASH APP
-# ============================================
+# ===========================================
 
 app = dash.Dash(
     __name__,
