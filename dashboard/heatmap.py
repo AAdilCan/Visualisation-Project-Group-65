@@ -5,7 +5,7 @@ from dashboard.style import HEATMAP_COLORSCALE, PLOTLY_TEMPLATE, MAIN_COLORS
 
 def create_heatmap(z_values, x_labels, y_labels, title):
     """Create a single heatmap
-    
+
     Args:
         z_values: 2D list of values for the heatmap
         x_labels: Labels for the x-axis (columns)

@@ -28,6 +28,13 @@ EVENT_COLORS = {
     "unknown": "#8b5cf6",
 }
 
+# Violin chart specific colors
+VIOLIN_CHART_COLORS = {
+    "default_service": "#6366f1",  # Fallback color for services
+    "aggregated_none": "#6366f1",  # Color for aggregated "None" event
+    "opacity": 0.6,  # Opacity for violin fills
+}
+
 
 # ============================================
 # PLOTLY FIGURE TEMPLATE
