@@ -147,8 +147,13 @@ def update_line_chart(
     selected_weeks = None
     existing_shapes = None
 
-    if triggered_id == "scatter-plot" and scatter_selected_data and "points" in scatter_selected_data:
-        # Scatter plot triggered with a selection - calculate new vertical lines
+    # Check if scatter plot has a non-empty selection
+    has_scatter_selection = (
+        scatter_selected_data and "points" in scatter_selected_data and len(scatter_selected_data["points"]) > 0
+    )
+
+    if triggered_id == "scatter-plot" and has_scatter_selection:
+        # Scatter plot triggered with actual selection - calculate new vertical lines
         week_lookup = _get_scatter_week_lookup(services, time_range)
 
         weeks = []
@@ -160,8 +165,12 @@ def update_line_chart(
 
         if weeks:
             selected_weeks = sorted(set(weeks))
+        else:
+            # Points exist but couldn't map to valid weeks - preserve existing shapes
+            if current_fig and "layout" in current_fig:
+                existing_shapes = current_fig["layout"].get("shapes", [])
     else:
-        # Non-scatter trigger or empty selection - preserve existing vertical lines
+        # Non-scatter trigger or empty/cleared selection - preserve existing vertical lines
         if current_fig and "layout" in current_fig:
             existing_shapes = current_fig["layout"].get("shapes", [])
 
