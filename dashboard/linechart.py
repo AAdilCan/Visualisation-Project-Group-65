@@ -75,12 +75,12 @@ def _create_vertical_lines(fig: go.Figure, selected_weeks: list[int]) -> None:
         fig.add_vline(
             x=week,
             line_dash="dash",
-            line_color="rgba(255, 100, 100, 0.8)",
+            line_color=MAIN_COLORS["highlight"],
             line_width=2,
             annotation_text=f"W{week}",
             annotation_position="top",
             annotation_font_size=10,
-            annotation_font_color="rgba(255, 100, 100, 1.0)",
+            annotation_font_color=MAIN_COLORS["highlight"],
         )
 
 
@@ -122,7 +122,7 @@ def _create_stream_graph(fig, selected_services):
             stackgroup="one",
             showlegend=False,
             hoverinfo="skip",
-            fillcolor="rgba(0,0,0,0)",
+            fillcolor=MAIN_COLORS["transparent"],
         )
     )
 
@@ -187,7 +187,8 @@ def create_line_chart(
         fig.update_layout(shapes=existing_shapes)
 
     # Build xaxis config, preserving range if provided
-    xaxis_config = dict(rangeslider=dict(visible=True), type="linear")
+    # Default range is 1-52 (weeks) to avoid empty space on the chart
+    xaxis_config = dict(rangeslider=dict(visible=True), type="linear", range=[1, 52])
     if xaxis_range is not None:
         xaxis_config["range"] = xaxis_range
 

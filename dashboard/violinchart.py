@@ -1,7 +1,7 @@
 import plotly.express as px
 from plotly.subplots import go
 from dashboard.dash_data import SERVICES, SERVICES_MAPPING
-from dashboard.style import CHART_COLORS, PLOTLY_TEMPLATE
+from dashboard.style import CHART_COLORS, PLOTLY_TEMPLATE, EVENT_COLORS
 
 
 def create_violin_chart(data, metric="satisfaction_from_patients", selected_services=None):
@@ -48,17 +48,6 @@ def create_violin_chart(data, metric="satisfaction_from_patients", selected_serv
         elif metric == "staff_morale":
             y_label = "Staff Morale"
     
-    # Event Colors
-    # "flu", "strike", "donation", "none"
-    event_colors = {
-        "flu": "#ef4444",      # Red
-        "strike": "#f59e0b",   # Amber/Orange
-        "donation": "#10b981", # Green
-        "none": "#6366f1",     # Indigo (Default)
-        # Fallback
-        "unknown": "#8b5cf6"
-    }
-
     fig = go.Figure()
 
     # Get unique events
@@ -70,7 +59,7 @@ def create_violin_chart(data, metric="satisfaction_from_patients", selected_serv
 
     for event in unique_events:
         event_data = filtered_data[filtered_data["event"] == event]
-        color = event_colors.get(str(event).lower(), event_colors["none"])
+        color = EVENT_COLORS.get(str(event).lower(), EVENT_COLORS["none"])
         event_name = str(event).capitalize()
         
         fig.add_trace(

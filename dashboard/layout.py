@@ -10,6 +10,7 @@ from dashboard.heatmap import create_heatmap
 from dashboard.linechart import create_line_chart
 from dashboard.scatterplot_matrix import create_scatter_plot
 from dashboard.violinchart import create_violin_chart
+from dashboard.style import MAIN_COLORS
 
 LINECHART_CARD = html.Div(
     [
@@ -18,15 +19,27 @@ LINECHART_CARD = html.Div(
                 html.Div(
                     [
                         html.H3("Services Weekly Performance"),
+                        html.P("Satisfaction Metrics for services" " against Patient Admissions and Bed Availability"),
                         html.P(
-                            "Satisfaction Metrics for services"
-                            " against Patient Admissions and Bed Availability"
+                            "* The scale for the streamgraph " "is not aligned with the metric scores.",
+                            style={
+                                "color": MAIN_COLORS["text_muted"],
+                                "fontSize": "0.75rem",
+                                "fontStyle": "italic",
+                            },
                         ),
                         html.P(
-                            "* The scale for the streamgraph "
-                            "is not aligned with the metric scores.",
+                            "* Services selection applies to all figures.",
                             style={
-                                "color": "#6b7280",
+                                "color": MAIN_COLORS["text_muted"],
+                                "fontSize": "0.75rem",
+                                "fontStyle": "italic",
+                            },
+                        ),
+                        html.P(
+                            "* Select a window with the slider to filter data on other figures.",
+                            style={
+                                "color": MAIN_COLORS["text_muted"],
                                 "fontSize": "0.75rem",
                                 "fontStyle": "italic",
                             },
@@ -39,7 +52,7 @@ LINECHART_CARD = html.Div(
                         html.Label(
                             "Services:",
                             style={
-                                "color": "#a0a0b0",
+                                "color": MAIN_COLORS["text_secondary"],
                                 "marginBottom": "8px",
                                 "display": "block",
                                 "fontSize": "0.8rem",
@@ -47,17 +60,14 @@ LINECHART_CARD = html.Div(
                         ),
                         dcc.Checklist(
                             id="services-checklist",
-                            options=[
-                                {"label": label, "value": service}
-                                for service, label in SERVICES_MAPPING.items()
-                            ],
-                            value=SERVICES,
+                            options=[{"label": label, "value": service} for service, label in SERVICES_MAPPING.items()],
+                            value=[SERVICES[0]],
                             className="custom-checklist",
                         ),
                         html.Label(
                             "Metrics:",
                             style={
-                                "color": "#a0a0b0",
+                                "color": MAIN_COLORS["text_secondary"],
                                 "marginBottom": "8px",
                                 "display": "block",
                                 "fontSize": "0.8rem",
@@ -137,7 +147,7 @@ HEATMAPS_CONTAINER = html.Div(
                         html.Label(
                             "Group By:",
                             style={
-                                "color": "#a0a0b0",
+                                "color": MAIN_COLORS["text_secondary"],
                                 "marginBottom": "8px",
                                 "display": "block",
                                 "fontSize": "0.8rem",
@@ -161,9 +171,7 @@ HEATMAPS_CONTAINER = html.Div(
         ),
         dcc.Graph(
             id="heatmap-main",
-            figure=create_heatmap(
-                *get_heatmap_data("age_bin", None), "Age Group vs Patient Satisfaction"
-            ),
+            figure=create_heatmap(*get_heatmap_data("age_bin", None), "Age Group vs Patient Satisfaction"),
             config={"responsive": True},
             style={"flex": "1"},
         ),
@@ -183,9 +191,7 @@ VIOLIN_CHART_CONTAINER = html.Div(
         ),
         html.Div(
             [
-                html.Label(
-                    "Metric:", style={"color": "#a0a0b0", "marginRight": "15px"}
-                ),
+                html.Label("Metric:", style={"color": MAIN_COLORS["text_secondary"], "marginRight": "15px"}),
                 dcc.RadioItems(
                     id="violin-metric-radio",
                     options=[
@@ -198,7 +204,7 @@ VIOLIN_CHART_CONTAINER = html.Div(
                     ],
                     value="satisfaction_from_patients",
                     inline=True,
-                    style={"color": "#ffffff"},
+                    style={"color": MAIN_COLORS["text"]},
                     inputStyle={"marginRight": "5px", "marginLeft": "15px"},
                     labelStyle={"display": "flex", "alignItems": "center"},
                 ),
@@ -222,9 +228,7 @@ LAYOUT = html.Div(
         html.Div(
             [
                 html.H1("Data Analysis & Visualization Dashboard"),
-                html.P(
-                    "Explore interactive visualizations with real-time data insights"
-                ),
+                html.P("Explore interactive visualizations with real-time data insights"),
             ],
             className="dashboard-header",
         ),
@@ -271,5 +275,5 @@ LAYOUT = html.Div(
             className="dashboard-footer",
         ),
     ],
-    style={"backgroundColor": "#0f0f1a", "minHeight": "100vh"},
+    style={"backgroundColor": MAIN_COLORS["bg"], "minHeight": "100vh"},
 )
