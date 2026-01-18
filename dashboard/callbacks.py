@@ -8,8 +8,8 @@ from dashboard.dash_data import get_heatmap_data, SERVICES_MAPPING, SERVICES
 
 
 def normalize_services(selected_services):
-    """Convert selected_services to actual service list, handling 'all' option."""
-    if not selected_services or "all" in selected_services:
+    """Convert selected_services to actual service list."""
+    if not selected_services:
         return SERVICES  # Return all services
     return selected_services
 
@@ -36,7 +36,8 @@ def update_heatmap(attribute, selected_services, relayout_data):
                 relayout_data["xaxis.range[0]"],
                 relayout_data["xaxis.range[1]"],
             )
-        # If autorange (reset) is triggered, week_range remains None (show all)
+
+    selected_services = normalize_services(selected_services)
 
     # Get heatmap data with filters applied
     z_values, x_labels, y_labels = get_heatmap_data(
@@ -49,21 +50,7 @@ def update_heatmap(attribute, selected_services, relayout_data):
     else:
         attr_name = "Length of Stay (Days)"
 
-    # Determine service name for title
-    if not selected_services or "all" in selected_services:
-        service_name = "All Services"
-    elif len(selected_services) == 1:
-        service_name = SERVICES_MAPPING.get(selected_services[0], selected_services[0])
-    else:
-        service_name = f"{len(selected_services)} Services"
-
-    # Add week range to title if filtered
-    if week_range:
-        week_info = f", Weeks {int(week_range[0])}-{int(week_range[1])}"
-    else:
-        week_info = ""
-
-    title = f"{attr_name} vs Patient Satisfaction ({service_name}{week_info})"
+    title = f"{attr_name} vs Patient Satisfaction"
 
     return create_heatmap(z_values, x_labels, y_labels, title)
 
@@ -160,7 +147,6 @@ def update_scatter_plot(selected_services, relayout_data):
 
         # If autorange (reset) is triggered, time_range remains None (show all)
 
-    # Normalize services to handle 'all' option
     services = normalize_services(selected_services)
 
     return create_scatter_plot(services, time_range)

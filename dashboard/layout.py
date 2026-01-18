@@ -37,6 +37,24 @@ LINECHART_CARD = html.Div(
                 html.Div(
                     [
                         html.Label(
+                            "Services:",
+                            style={
+                                "color": "#a0a0b0",
+                                "marginBottom": "8px",
+                                "display": "block",
+                                "fontSize": "0.8rem",
+                            },
+                        ),
+                        dcc.Checklist(
+                            id="services-checklist",
+                            options=[
+                                {"label": label, "value": service}
+                                for service, label in SERVICES_MAPPING.items()
+                            ],
+                            value=SERVICES,
+                            className="custom-checklist",
+                        ),
+                        html.Label(
                             "Metrics:",
                             style={
                                 "color": "#a0a0b0",
@@ -55,24 +73,6 @@ LINECHART_CARD = html.Div(
                                 {"label": "Staff Morale", "value": "Staff Morale"},
                             ],
                             value=["Patient Satisfaction"],
-                            className="custom-checklist",
-                        ),
-                        html.Label(
-                            "Services:",
-                            style={
-                                "color": "#a0a0b0",
-                                "marginBottom": "8px",
-                                "display": "block",
-                                "fontSize": "0.8rem",
-                            },
-                        ),
-                        dcc.Checklist(
-                            id="services-checklist",
-                            options=[
-                                {"label": label, "value": service}
-                                for service, label in SERVICES_MAPPING.items()
-                            ],
-                            value=[SERVICES[0]],
                             className="custom-checklist",
                         ),
                     ],
