@@ -1,7 +1,12 @@
 import plotly.express as px
 from plotly.subplots import go
 from dashboard.dash_data import STREAM_DATA
-from dashboard.style import CHART_COLORS, PLOTLY_TEMPLATE, MAIN_COLORS, STREAM_GRAPH_COLORS
+from dashboard.style import (
+    CHART_COLORS,
+    PLOTLY_TEMPLATE,
+    MAIN_COLORS,
+    STREAM_GRAPH_COLORS,
+)
 
 
 def _create_lines(fig, selected_metrics, selected_services, metric_labels):
@@ -13,7 +18,11 @@ def _create_lines(fig, selected_metrics, selected_services, metric_labels):
 
         for j, metric in enumerate(selected_metrics):
             # Use different line styles if multiple metrics are selected
-            line_style = dict(width=2, color=CHART_COLORS[i % num_available_colors], dash="solid" if j == 0 else "dash")
+            line_style = dict(
+                width=2,
+                color=CHART_COLORS[i % num_available_colors],
+                dash="solid" if j == 0 else "dash",
+            )
 
             fig.add_trace(
                 go.Scatter(
@@ -37,11 +46,41 @@ def _create_lines(fig, selected_metrics, selected_services, metric_labels):
                 y=avg_by_week[metric],
                 name=f"Avg - {metric_labels[metric]}",
                 mode="lines",
-                line=dict(color=MAIN_COLORS["text"], width=3, dash="dot" if j == 0 else "longdashdot"),
+                line=dict(
+                    color=MAIN_COLORS["text"],
+                    width=3,
+                    dash="dot" if j == 0 else "longdashdot",
+                ),
                 hovertemplate=(
                     f"<b>Average {metric_labels[metric]}</b><br>" "Week: %{x}<br>Value: %{y:.1f}<extra></extra>"
                 ),
             )
+        )
+
+
+def _create_vertical_lines(fig: go.Figure, selected_weeks: list[int]) -> None:
+    """Draw vertical lines at specific week positions on the chart.
+
+    Args:
+        fig: Plotly figure object to add vertical lines to
+        selected_weeks: List of week numbers where vertical lines should be drawn
+    """
+    if not selected_weeks:
+        return
+
+    # Get unique weeks to avoid duplicate lines
+    unique_weeks = sorted(set(int(w) for w in selected_weeks))
+
+    for week in unique_weeks:
+        fig.add_vline(
+            x=week,
+            line_dash="dash",
+            line_color=MAIN_COLORS["highlight"],
+            line_width=2,
+            annotation_text=f"W{week}",
+            annotation_position="top",
+            annotation_font_size=10,
+            annotation_font_color=MAIN_COLORS["highlight"],
         )
 
 
@@ -56,7 +95,12 @@ def _create_stream_graph(fig, selected_services):
         return
 
     # Sum values by Week for all selected services
-    metrics = ["Available Beds", "Patient Requests", "Patient Admissions", "Patient Refusals"]
+    metrics = [
+        "Available Beds",
+        "Patient Requests",
+        "Patient Admissions",
+        "Patient Refusals",
+    ]
     stream_df = filtered_df.groupby("Week")[metrics].sum().reset_index()
 
     # Calculate scaling factor to keep total height around 0-55
@@ -78,7 +122,7 @@ def _create_stream_graph(fig, selected_services):
             stackgroup="one",
             showlegend=False,
             hoverinfo="skip",
-            fillcolor="rgba(0,0,0,0)",
+            fillcolor=MAIN_COLORS["transparent"],
         )
     )
 
@@ -106,23 +150,63 @@ def _create_stream_graph(fig, selected_services):
         )
 
 
-def create_line_chart(selected_metrics, selected_services):
-    """Create line chart for each service with an average overlay"""
+def create_line_chart(
+    selected_metrics: list[str],
+    selected_services: list[str],
+    xaxis_range: list[float] | None = None,
+    selected_weeks: list[int] | None = None,
+    existing_shapes: list | None = None,
+) -> go.Figure:
+    """Create line chart for each service with an average overlay.
+
+    Args:
+        selected_metrics: List of metrics to display
+        selected_services: List of services to display
+        xaxis_range: Optional list [min, max] to preserve x-axis zoom state (weeks)
+        selected_weeks: Optional list of week numbers to highlight with vertical lines
+        existing_shapes: Optional list of shapes to preserve (e.g., vertical lines from previous state)
+    """
 
     fig = go.Figure()
 
     # Metric display names for labels
-    metric_labels = {"Patient Satisfaction": "Patient Satisfaction", "Staff Morale": "Staff Morale"}
+    metric_labels = {
+        "Patient Satisfaction": "Patient Satisfaction",
+        "Staff Morale": "Staff Morale",
+    }
 
     _create_stream_graph(fig, selected_services)
     _create_lines(fig, selected_metrics, selected_services, metric_labels)
 
+    # Add vertical lines for selected weeks from scatter plot
+    # If selected_weeks provided, create new vertical lines; otherwise use existing_shapes
+    if selected_weeks is not None:
+        _create_vertical_lines(fig, selected_weeks)
+    elif existing_shapes:
+        # Preserve existing vertical lines from previous figure state
+        fig.update_layout(shapes=existing_shapes)
+
+    # Build xaxis config, preserving range if provided
+    # Default range is 1-52 (weeks) to avoid empty space on the chart
+    xaxis_config = dict(rangeslider=dict(visible=True), type="linear", range=[1, 52])
+    if xaxis_range is not None:
+        xaxis_config["range"] = xaxis_range
+
     fig.update_layout(
+        # uirevision preserves legend visibility and other UI state when constant
+        uirevision="line-chart-constant",
         template=PLOTLY_TEMPLATE,
         height=600,
         margin=dict(l=50, r=30, t=30, b=30),
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5, font=dict(size=10)),
-        xaxis=dict(rangeslider=dict(visible=True), type="linear"),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="center",
+            x=0.5,
+            font=dict(size=10),
+        ),
+        xaxis=xaxis_config,
         yaxis=dict(title="Metric Value", range=[0, 100], tickvals=[60, 70, 80, 90, 100]),
         hovermode="x unified",
     )

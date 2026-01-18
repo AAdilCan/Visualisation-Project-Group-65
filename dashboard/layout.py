@@ -1,10 +1,16 @@
 from dash import dcc, html
 
-from dashboard.dash_data import get_heatmap_data, SERVICES, SERVICES_MAPPING, SERVICES_DATA
+from dashboard.dash_data import (
+    get_heatmap_data,
+    SERVICES,
+    SERVICES_MAPPING,
+    SERVICES_DATA,
+)
 from dashboard.heatmap import create_heatmap
 from dashboard.linechart import create_line_chart
 from dashboard.scatterplot_matrix import create_scatter_plot
 from dashboard.violinchart import create_violin_chart
+from dashboard.style import MAIN_COLORS
 
 LINECHART_CARD = html.Div(
     [
@@ -17,7 +23,23 @@ LINECHART_CARD = html.Div(
                         html.P(
                             "* The scale for the streamgraph " "is not aligned with the metric scores.",
                             style={
-                                "color": "#6b7280",
+                                "color": MAIN_COLORS["text_muted"],
+                                "fontSize": "0.75rem",
+                                "fontStyle": "italic",
+                            },
+                        ),
+                        html.P(
+                            "* Services selection applies to all figures.",
+                            style={
+                                "color": MAIN_COLORS["text_muted"],
+                                "fontSize": "0.75rem",
+                                "fontStyle": "italic",
+                            },
+                        ),
+                        html.P(
+                            "* Select a window with the slider to filter data on other figures.",
+                            style={
+                                "color": MAIN_COLORS["text_muted"],
                                 "fontSize": "0.75rem",
                                 "fontStyle": "italic",
                             },
@@ -28,9 +50,24 @@ LINECHART_CARD = html.Div(
                 html.Div(
                     [
                         html.Label(
+                            "Services:",
+                            style={
+                                "color": MAIN_COLORS["text_secondary"],
+                                "marginBottom": "8px",
+                                "display": "block",
+                                "fontSize": "0.8rem",
+                            },
+                        ),
+                        dcc.Checklist(
+                            id="services-checklist",
+                            options=[{"label": label, "value": service} for service, label in SERVICES_MAPPING.items()],
+                            value=[SERVICES[0]],
+                            className="custom-checklist",
+                        ),
+                        html.Label(
                             "Metrics:",
                             style={
-                                "color": "#a0a0b0",
+                                "color": MAIN_COLORS["text_secondary"],
                                 "marginBottom": "8px",
                                 "display": "block",
                                 "fontSize": "0.8rem",
@@ -48,21 +85,6 @@ LINECHART_CARD = html.Div(
                             value=["Patient Satisfaction"],
                             className="custom-checklist",
                         ),
-                        html.Label(
-                            "Services:",
-                            style={
-                                "color": "#a0a0b0",
-                                "marginBottom": "8px",
-                                "display": "block",
-                                "fontSize": "0.8rem",
-                            },
-                        ),
-                        dcc.Checklist(
-                            id="services-checklist",
-                            options=[{"label": "All Services", "value": "all"}] + [{"label": label, "value": service} for service, label in SERVICES_MAPPING.items()],
-                            value=["all"],
-                            className="custom-checklist",
-                        ),
                     ],
                     className="services-filters-container",
                 ),
@@ -77,6 +99,12 @@ LINECHART_CARD = html.Div(
         ),
     ],
     className="graph-card",
+    style={
+        "background": "transparent",
+        "border": "none",
+        "boxShadow": "none",
+        "padding": "0",
+    },
 )
 
 
@@ -99,7 +127,7 @@ SCATTER_PLOT_CARD = html.Div(
     ],
     className="graph-card",
     # Ensure the card itself fills the height of the grid cell
-    style={"height": "100%"}
+    style={"height": "100%"},
 )
 
 
@@ -119,7 +147,7 @@ HEATMAPS_CONTAINER = html.Div(
                         html.Label(
                             "Group By:",
                             style={
-                                "color": "#a0a0b0",
+                                "color": MAIN_COLORS["text_secondary"],
                                 "marginBottom": "8px",
                                 "display": "block",
                                 "fontSize": "0.8rem",
@@ -143,16 +171,13 @@ HEATMAPS_CONTAINER = html.Div(
         ),
         dcc.Graph(
             id="heatmap-main",
-            figure=create_heatmap(
-                *get_heatmap_data("age_bin", None),
-                "Age Group vs Patient Satisfaction"
-            ),
+            figure=create_heatmap(*get_heatmap_data("age_bin", None), "Age Group vs Patient Satisfaction"),
             config={"responsive": True},
             style={"flex": "1"},
         ),
     ],
     className="graph-card",
-    style={"height": "100%", "display": "flex", "flexDirection": "column"}
+    style={"height": "100%", "display": "flex", "flexDirection": "column"},
 )
 
 
@@ -166,17 +191,20 @@ VIOLIN_CHART_CONTAINER = html.Div(
         ),
         html.Div(
             [
-                html.Label("Metric:", style={"color": "#a0a0b0", "marginRight": "15px"}),
+                html.Label("Metric:", style={"color": MAIN_COLORS["text_secondary"], "marginRight": "15px"}),
                 dcc.RadioItems(
                     id="violin-metric-radio",
                     options=[
-                        {"label": "Patient Satisfaction", "value": "satisfaction_from_patients"},
+                        {
+                            "label": "Patient Satisfaction",
+                            "value": "satisfaction_from_patients",
+                        },
                         {"label": "Staff Morale", "value": "staff_morale"},
                         {"label": "Refused/Admitted Ratio", "value": "ratio"},
                     ],
                     value="satisfaction_from_patients",
                     inline=True,
-                    style={"color": "#ffffff"},
+                    style={"color": MAIN_COLORS["text"]},
                     inputStyle={"marginRight": "5px", "marginLeft": "15px"},
                     labelStyle={"display": "flex", "alignItems": "center"},
                 ),
@@ -210,7 +238,6 @@ LAYOUT = html.Div(
             [
                 # Row 1: Stream Graph (Full Width)
                 LINECHART_CARD,
-
                 # Row 2: Scatter Plot + Heatmaps (Side by Side)
                 html.Div(
                     [
@@ -223,10 +250,9 @@ LAYOUT = html.Div(
                         "gridTemplateColumns": "1fr 1fr",
                         "gap": "24px",
                         "marginBottom": "24px",
-                        "alignItems": "stretch"
+                        "alignItems": "stretch",
                     },
                 ),
-
                 # Row 3: Violin Chart (Full Width)
                 VIOLIN_CHART_CONTAINER,
             ],
@@ -238,12 +264,16 @@ LAYOUT = html.Div(
                 html.P(
                     [
                         "Data Visualization Project - Group 65 | Built with ",
-                        html.A("Dash & Plotly", href="https://plotly.com/dash/", target="_blank"),
+                        html.A(
+                            "Dash & Plotly",
+                            href="https://plotly.com/dash/",
+                            target="_blank",
+                        ),
                     ]
                 )
             ],
             className="dashboard-footer",
         ),
     ],
-    style={"backgroundColor": "#0f0f1a", "minHeight": "100vh"},
+    style={"backgroundColor": MAIN_COLORS["bg"], "minHeight": "100vh"},
 )

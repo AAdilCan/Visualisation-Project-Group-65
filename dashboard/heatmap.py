@@ -1,11 +1,11 @@
 from plotly import graph_objects as go
 
-from dashboard.style import HEATMAP_COLORSCALE, PLOTLY_TEMPLATE
+from dashboard.style import HEATMAP_COLORSCALE, PLOTLY_TEMPLATE, MAIN_COLORS
 
 
 def create_heatmap(z_values, x_labels, y_labels, title):
     """Create a single heatmap
-    
+
     Args:
         z_values: 2D list of values for the heatmap
         x_labels: Labels for the x-axis (columns)
@@ -22,7 +22,7 @@ def create_heatmap(z_values, x_labels, y_labels, title):
             showscale=True,
             colorbar=dict(
                 title=dict(text="Patients", side="right"),
-                tickfont=dict(color="#a0a0b0"),
+                tickfont=dict(color=MAIN_COLORS["text_secondary"]),
             ),
             hovertemplate="%{y} × %{x}<br>Patients: %{z}<extra></extra>",
         )
@@ -40,7 +40,7 @@ def create_heatmap(z_values, x_labels, y_labels, title):
                         y=y_labels[i],
                         text=str(val),
                         showarrow=False,
-                        font=dict(color="white" if val > 5 else "#a0a0b0", size=9),
+                        font=dict(color=MAIN_COLORS["text"] if val > 5 else MAIN_COLORS["text_secondary"], size=9),
                     )
                 )
 
