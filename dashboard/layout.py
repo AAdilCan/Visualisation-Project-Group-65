@@ -137,8 +137,8 @@ HEATMAPS_CONTAINER = html.Div(
             [
                 html.Div(
                     [
-                        html.H3("Patient Satisfaction Heatmap"),
-                        html.P("Distribution of patients across satisfaction levels"),
+                        html.H3("Patient Satisfaction Heatmaps"),
+                        html.P("Distribution of patients across satisfaction levels by service"),
                     ],
                     style={"flex": "1"},
                 ),
@@ -169,11 +169,37 @@ HEATMAPS_CONTAINER = html.Div(
             ],
             className="graph-card-header",
         ),
-        dcc.Graph(
-            id="heatmap-main",
-            figure=create_heatmap(*get_heatmap_data("age_bin", None), "Age Group vs Patient Satisfaction"),
-            config={"responsive": True},
-            style={"flex": "1"},
+        # 2x2 Grid of Heatmaps - one for each service
+        html.Div(
+            [
+                dcc.Graph(
+                    id="heatmap-emergency",
+                    figure=create_heatmap(*get_heatmap_data("age_bin", "emergency"), "Emergency"),
+                    config={"responsive": True},
+                ),
+                dcc.Graph(
+                    id="heatmap-icu",
+                    figure=create_heatmap(*get_heatmap_data("age_bin", "ICU"), "ICU"),
+                    config={"responsive": True},
+                ),
+                dcc.Graph(
+                    id="heatmap-surgery",
+                    figure=create_heatmap(*get_heatmap_data("age_bin", "surgery"), "Surgery"),
+                    config={"responsive": True},
+                ),
+                dcc.Graph(
+                    id="heatmap-general-medicine",
+                    figure=create_heatmap(*get_heatmap_data("age_bin", "general_medicine"), "General Medicine"),
+                    config={"responsive": True},
+                ),
+            ],
+            style={
+                "display": "grid",
+                "gridTemplateColumns": "1fr 1fr",
+                "gridTemplateRows": "1fr 1fr",
+                "gap": "10px",
+                "flex": "1",
+            },
         ),
     ],
     className="graph-card",

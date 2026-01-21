@@ -1,38 +1,49 @@
 # ============================================
-# COLOR SCHEMES
+# COLOR SCHEMES - HOSPITAL PROFESSIONAL LIGHT THEME
+# Clean, clinical, and visually appealing
 # ============================================
 
 MAIN_COLORS = {
-    "bg": "#0f0f1a",
-    "card_bg": "rgba(30, 30, 50, 0.8)",
-    "text": "#ffffff",
-    "text_secondary": "#a0a0b0",
-    "text_muted": "#6b7280",
-    "accent": "#6366f1",
-    "grid": "rgba(255, 255, 255, 0.1)",
-    "highlight": "#ff6464",
+    "bg": "#f0f4f8",  # Soft blue-gray background
+    "card_bg": "#ffffff",
+    "text": "#1e3a5f",  # Deep navy for readability
+    "text_secondary": "#4a6fa5",  # Medium blue-gray
+    "text_muted": "#7b9bc0",  # Light blue-gray
+    "accent": "#0077b6",  # Healthcare blue
+    "grid": "rgba(30, 58, 95, 0.1)",
+    "highlight": "#e63946",  # Alert red
     "transparent": "rgba(0,0,0,0)",
+    "border": "#d0dce8",  # Soft blue-gray border
 }
 
-# Vibrant color palette for charts
-CHART_COLORS = ["#6366f1", "#8b5cf6", "#06b6d4", "#10b981", "#f59e0b"]
-STREAM_GRAPH_COLORS = ["#ef4444", "#3b82f6", "#10b981", "#f59e0b", "#0f0f1a"]
-HEATMAP_COLORSCALE = [[0, "#1e1e3c"], [0.25, "#3b3b6d"], [0.5, "#6366f1"], [0.75, "#8b5cf6"], [1, "#c4b5fd"]]
+# Professional healthcare color palette - distinct colors for line charts
+CHART_COLORS = ["#e63946", "#2a9d8f", "#0077b6", "#f77f00", "#9b5de5"]  # Red, Green, Blue, Orange, Purple
+STREAM_GRAPH_COLORS = ["#e63946", "#0077b6", "#2a9d8f", "#f77f00", "#f0f4f8"]
 
-# Event colors for violin chart (maps to specific events)
+# Heatmap: Light lavender to deep indigo (darker = more patients)
+HEATMAP_COLORSCALE = [
+    [0, "#f8f9fa"],      # Almost white for zero
+    [0.2, "#e0e7ff"],    # Very light indigo
+    [0.4, "#a5b4fc"],    # Light indigo
+    [0.6, "#6366f1"],    # Medium indigo
+    [0.8, "#4338ca"],    # Dark indigo
+    [1, "#312e81"]       # Very dark indigo
+]
+
+# Event colors for violin chart
 EVENT_COLORS = {
-    "flu": "#ef4444",
-    "strike": "#f59e0b",
-    "donation": "#10b981",
-    "none": "#6366f1",
-    "unknown": "#8b5cf6",
+    "flu": "#e63946",
+    "strike": "#f77f00",
+    "donation": "#2a9d8f",
+    "none": "#0077b6",
+    "unknown": "#6366f1",
 }
 
 # Violin chart specific colors
 VIOLIN_CHART_COLORS = {
-    "default_service": "#6366f1",  # Fallback color for services
-    "aggregated_none": "#6366f1",  # Color for aggregated "None" event
-    "opacity": 0.6,  # Opacity for violin fills
+    "default_service": "#0077b6",
+    "aggregated_none": "#0077b6",
+    "opacity": 0.7,
 }
 
 
@@ -42,20 +53,28 @@ VIOLIN_CHART_COLORS = {
 
 PLOTLY_TEMPLATE = {
     "layout": {
-        "paper_bgcolor": "rgba(0,0,0,0)",
-        "plot_bgcolor": "rgba(0,0,0,0)",
+        "paper_bgcolor": "#ffffff",
+        "plot_bgcolor": "#ffffff",
         "font": {"color": MAIN_COLORS["text"], "family": "Inter, sans-serif"},
         "xaxis": {
             "gridcolor": MAIN_COLORS["grid"],
             "zerolinecolor": MAIN_COLORS["grid"],
             "tickfont": {"color": MAIN_COLORS["text_secondary"]},
+            "linecolor": MAIN_COLORS["border"],
+            "linewidth": 1,
         },
         "yaxis": {
             "gridcolor": MAIN_COLORS["grid"],
             "zerolinecolor": MAIN_COLORS["grid"],
             "tickfont": {"color": MAIN_COLORS["text_secondary"]},
+            "linecolor": MAIN_COLORS["border"],
+            "linewidth": 1,
         },
         "colorway": CHART_COLORS,
-        "hoverlabel": {"bgcolor": MAIN_COLORS["card_bg"], "font": {"color": MAIN_COLORS["text"], "family": "Inter"}},
+        "hoverlabel": {
+            "bgcolor": "#ffffff",
+            "font": {"color": MAIN_COLORS["text"], "family": "Inter"},
+            "bordercolor": MAIN_COLORS["border"],
+        },
     }
 }

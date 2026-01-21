@@ -56,15 +56,20 @@ def _get_scatter_week_lookup(
 
 
 @callback(
-    Output("heatmap-main", "figure"),
+    [
+        Output("heatmap-emergency", "figure"),
+        Output("heatmap-icu", "figure"),
+        Output("heatmap-surgery", "figure"),
+        Output("heatmap-general-medicine", "figure"),
+    ],
     [
         Input("heatmap-attribute-radio", "value"),
-        Input("services-checklist", "value"),
         Input("line-chart", "relayoutData"),
     ],
+    prevent_initial_call=True,
 )
-def update_heatmap(attribute, selected_services, relayout_data):
-    """Update heatmap based on attribute, service selection, and time range."""
+def update_heatmaps(attribute, relayout_data):
+    """Update all 4 heatmaps based on attribute selection and time range."""
 
     # Extract week range from line chart selection
     week_range = None
@@ -78,20 +83,21 @@ def update_heatmap(attribute, selected_services, relayout_data):
                 relayout_data["xaxis.range[1]"],
             )
 
-    selected_services = normalize_services(selected_services)
+    # Define the services and their display names
+    services = [
+        ("emergency", "Emergency"),
+        ("ICU", "ICU"),
+        ("surgery", "Surgery"),
+        ("general_medicine", "General Medicine"),
+    ]
 
-    # Get heatmap data with filters applied
-    z_values, x_labels, y_labels = get_heatmap_data(attribute, selected_services, week_range)
+    figures = []
+    for service_id, service_name in services:
+        z_values, x_labels, y_labels = get_heatmap_data(attribute, service_id, week_range)
+        fig = create_heatmap(z_values, x_labels, y_labels, service_name)
+        figures.append(fig)
 
-    # Create dynamic title
-    if attribute == "age_bin":
-        attr_name = "Age Group"
-    else:
-        attr_name = "Length of Stay (Days)"
-
-    title = f"{attr_name} vs Patient Satisfaction"
-
-    return create_heatmap(z_values, x_labels, y_labels, title)
+    return figures
 
 
 @callback(
@@ -184,6 +190,7 @@ def update_line_chart(
         Input("line-chart", "relayoutData"),
         Input("services-checklist", "value"),
     ],
+    prevent_initial_call=True,
 )
 def update_violin_chart(selected_metric, relayout_data, selected_services):
     """
@@ -214,6 +221,7 @@ def update_violin_chart(selected_metric, relayout_data, selected_services):
 @callback(
     Output("scatter-plot", "figure"),
     [Input("services-checklist", "value"), Input("line-chart", "relayoutData")],
+    prevent_initial_call=True,
 )
 def update_scatter_plot(selected_services, relayout_data):
     """

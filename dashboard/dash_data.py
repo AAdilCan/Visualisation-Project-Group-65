@@ -211,6 +211,13 @@ def get_heatmap_data(row_attribute="age_bin", service_filter=None, week_range=No
         min_week, max_week = week_range
         df = df[(df["week"] >= min_week) & (df["week"] <= max_week)]
 
+    # Apply service filter if specified
+    if service_filter is not None:
+        if isinstance(service_filter, str):
+            df = df[df["service"] == service_filter]
+        elif isinstance(service_filter, list) and len(service_filter) > 0:
+            df = df[df["service"].isin(service_filter)]
+
     # Create crosstab (count of patients in each cell)
     if row_attribute == "age_bin":
         crosstab = pd.crosstab(df["age_bin"], df["satisfaction_bin"])
