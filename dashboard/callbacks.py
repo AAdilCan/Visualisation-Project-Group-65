@@ -213,39 +213,75 @@ def update_violin_chart(selected_metric, relayout_data, selected_services):
 
 @callback(
     Output("scatter-plot", "figure"),
-    [Input("services-checklist", "value"), Input("line-chart", "relayoutData")],
+    [
+        Input("services-checklist", "value"),
+        Input("line-chart", "relayoutData"),
+        Input("violin-chart", "clickData"),
+    ],
 )
-def update_scatter_plot(selected_services, relayout_data):
+def update_scatter_plot(selected_services, relayout_data, violin_click_data):
     """
     Update scatter plot based on:
     1. Service selection
     2. Time range selected in Line Chart (Zoom/Pan)
+    3. Event selected in Violin Chart (Click)
     """
 
+    # 1. Handle Time Range
     time_range = None
-
-    # Check if the trigger was the line chart zoom/pan
     if relayout_data:
-        # relayoutData keys vary depending on interaction:
-        # 1. 'xaxis.range': [min, max] (Standard zoom)
-        # 2. 'xaxis.range[0]': min (Partial update)
-        # 3. 'xaxis.autorange': True (Double click reset)
-
         if "xaxis.range" in relayout_data:
             r = relayout_data["xaxis.range"]
             time_range = (r[0], r[1])
-
         elif "xaxis.range[0]" in relayout_data and "xaxis.range[1]" in relayout_data:
             time_range = (
                 relayout_data["xaxis.range[0]"],
                 relayout_data["xaxis.range[1]"],
             )
 
-        # If autorange (reset) is triggered, time_range remains None (show all)
+    # 2. Normalize Services
+    services_list = normalize_services(selected_services)
 
-    services = normalize_services(selected_services)
+    # 3. Handle Event Selection via Click
+    selected_event = None
+    trigger_id = ctx.triggered_id
 
-    return create_scatter_plot(services, time_range)
+    # If the user clicked the violin chart, we must interpret the click.
+    if trigger_id == "violin-chart" and violin_click_data:
+        try:
+            # We must reconstruct the EXACT event list used by the violin chart
+            # to map the x-coordinate index back to the event name.
+
+            # A. Filter data by services (just like the violin chart does)
+            # This ensures that if an event is missing from the current view, we don't count it.
+            df_temp = SERVICES_DATA[SERVICES_DATA["service"].isin(services_list)]
+
+            # B. Get unique events
+            events_found = df_temp["event"].unique()
+
+            # C. Sort alphabetically (Capitalized) excluding 'None'
+            sorted_events = sorted([
+                str(e).capitalize()
+                for e in events_found
+                if str(e).lower() != "none"
+            ])
+
+            # D. Append 'None' at the end if it exists in the data
+            if any(str(e).lower() == "none" for e in events_found):
+                sorted_events.append("None")
+
+            # E. Get the clicked coordinate and round to nearest integer index
+            click_x = violin_click_data["points"][0]["x"]
+            idx = int(round(click_x))
+
+            # F. Map index to name
+            if 0 <= idx < len(sorted_events):
+                selected_event = sorted_events[idx].lower()
+
+        except (KeyError, IndexError, ValueError):
+            selected_event = None
+
+    return create_scatter_plot(services_list, time_range, selected_event)
 
 
 # =========================================================

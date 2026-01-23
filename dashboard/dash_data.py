@@ -169,6 +169,7 @@ SCATTER_DATA = SCATTER_DATA[
         "Morale",
         "Refused/Admitted Ratio",
         "Staff/Patient Ratio",
+        "event",
     ]
 ]
 

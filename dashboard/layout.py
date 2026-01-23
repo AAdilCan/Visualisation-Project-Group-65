@@ -82,7 +82,7 @@ SIDEBAR_OVERLAY = html.Div(
         # NOTE: Metric checklist removed from here
 
         html.Div(
-            "ℹ️ These filters update all charts instantly.",
+            "ℹ️ These filters update all charts.",
             style={"marginTop": "auto", "fontSize": "0.85rem", "color": MAIN_COLORS["text_muted"]}
         )
     ],

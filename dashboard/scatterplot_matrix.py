@@ -1,15 +1,16 @@
 import plotly.express as px
+import numpy as np
 from dashboard.style import CHART_COLORS, PLOTLY_TEMPLATE, MAIN_COLORS
 from dashboard.dash_data import SCATTER_DATA, SERVICES_MAPPING
 
 
-def create_scatter_plot(selected_services=None, time_range=None):
-
+def create_scatter_plot(selected_services=None, time_range=None, selected_event=None):
     # 1. Define dimensions
     dimensions = ["Satisfaction", "Morale", "Refused/Admitted Ratio", "Staff/Patient Ratio"]
 
     # 2. Filter data based on selection
-    df_plot = SCATTER_DATA[dimensions + ["Category", "Week"]]
+    # NOTE: We include 'event' here for hover/styling, but we DO NOT filter rows by event anymore.
+    df_plot = SCATTER_DATA[dimensions + ["Category", "Week", "event"]]
 
     if selected_services:
         # Map IDs to Labels
@@ -31,7 +32,7 @@ def create_scatter_plot(selected_services=None, time_range=None):
             yaxis={"visible": False},
             annotations=[
                 {
-                    "text": "No Service Selected",
+                    "text": "No Data (Check Filters)",
                     "xref": "paper",
                     "yref": "paper",
                     "showarrow": False,
@@ -47,15 +48,51 @@ def create_scatter_plot(selected_services=None, time_range=None):
         dimensions=dimensions,
         color="Category",
         color_discrete_sequence=CHART_COLORS,
-        hover_data={"Week": True},
+        # We ensure 'event' is the LAST item in hover_data for easy access in customdata
+        hover_data={"Week": True, "event": True},
         height=800,
     )
 
-    # Style the markers
-    fig.update_traces(
-        marker=dict(size=6, opacity=0.8, line=dict(width=0.5, color="white")),
-        unselected=dict(marker=dict(opacity=0.05, color="grey")),
-    )
+    # 4. Apply Event Filtering via Visual Styling (Highlight vs Grey out)
+    if selected_event:
+        target_event = str(selected_event).lower()
+
+        # Iterate over every trace (Category) in the figure
+        for trace in fig.data:
+            # trace.customdata contains the hover_data columns.
+            # structure: [[Week, Event], [Week, Event], ...] based on hover_data order
+            try:
+                # Extract events from the trace data
+                # We assume 'event' is at index 1 because we passed {"Week": True, "event": True}
+                trace_events = trace.customdata[:, 1]
+
+                # Create styling arrays based on match
+                # Match: Opacity 0.8, Color: (Keep original trace color)
+                # No Match: Opacity 0.1, Color: Grey (Optional, but opacity is usually enough)
+
+                opacity_array = []
+                for evt in trace_events:
+                    if str(evt).lower() == target_event:
+                        opacity_array.append(0.9)
+                    else:
+                        opacity_array.append(0.1)  # Dim non-matching points
+
+                # Update the trace
+                trace.marker.opacity = opacity_array
+
+                # Optional: Remove white border from dimmed points to make them really fade away
+                # line_width_array = [0.5 if o > 0.5 else 0 for o in opacity_array]
+                # trace.marker.line.width = line_width_array
+
+            except Exception:
+                # Fallback if customdata structure is unexpected
+                pass
+    else:
+        # Default styling if no event selected
+        fig.update_traces(
+            marker=dict(size=6, opacity=0.8, line=dict(width=0.5, color="white")),
+            unselected=dict(marker=dict(opacity=0.05, color="grey")),
+        )
 
     # 5. Global Layout Configuration
     fig.update_layout(

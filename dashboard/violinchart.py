@@ -126,7 +126,9 @@ def _add_violin_traces(
                 opacity=VIOLIN_CHART_COLORS["opacity"],
                 width=violin_width,
                 points=False,
-                hovertemplate=f"<b>{service_name}</b><br>{y_label}: %{{y:.2f}}<extra></extra>",
+                # --- NEW: Add customdata for correct hover info ---
+                customdata=service_data["event"],
+                hovertemplate=f"<b>{service_name}</b><br>Event: %{{customdata}}<br>{y_label}: %{{y:.2f}}<extra></extra>",
             )
         )
 
