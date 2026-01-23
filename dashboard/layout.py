@@ -22,8 +22,8 @@ FILTER_BUTTON = html.Button(
     n_clicks=0,
     style={
         "position": "fixed",
-        "top": "30px",       # CHANGED: Fixed to Top
-        "left": "30px",      # CHANGED: Fixed to Left
+        "top": "30px",
+        "left": "30px",
         "zIndex": "1050",
         "padding": "10px 20px",
         "backgroundColor": MAIN_COLORS["accent"],
@@ -38,7 +38,7 @@ FILTER_BUTTON = html.Button(
 )
 
 # =========================================
-# 2. OVERLAY SIDEBAR
+# 2. OVERLAY SIDEBAR (Services Only)
 # =========================================
 SIDEBAR_OVERLAY = html.Div(
     [
@@ -79,17 +79,7 @@ SIDEBAR_OVERLAY = html.Div(
             style={"display": "flex", "flexDirection": "column", "gap": "8px", "marginBottom": "25px"}
         ),
 
-        html.Label("Select Metrics:", style={"fontWeight": "bold", "marginBottom": "8px", "display": "block"}),
-        dcc.Checklist(
-            id="metric-checklist",
-            options=[
-                {"label": "Patient Satisfaction", "value": "Patient Satisfaction"},
-                {"label": "Staff Morale", "value": "Staff Morale"},
-            ],
-            value=["Patient Satisfaction"],
-            className="custom-checklist",
-            style={"display": "flex", "flexDirection": "column", "gap": "8px", "marginBottom": "25px"}
-        ),
+        # NOTE: Metric checklist removed from here
 
         html.Div(
             "ℹ️ These filters update all charts instantly.",
@@ -100,30 +90,29 @@ SIDEBAR_OVERLAY = html.Div(
     style={
         "position": "fixed",
         "top": "0",
-        "left": "-350px",  # CHANGED: Hidden off-screen to the LEFT
+        "left": "-350px",
         "width": "300px",
         "height": "100vh",
         "backgroundColor": "white",
         "boxShadow": "5px 0 15px rgba(0,0,0,0.2)",
         "padding": "30px",
         "zIndex": "1100",
-        "transition": "left 0.3s ease-in-out", # CHANGED: Animate 'left' property
+        "transition": "left 0.3s ease-in-out",
         "overflowY": "auto"
     },
 )
 
-
 # =========================================
-# 3. LINECHART
+# 3. LINECHART (Metrics Added Here)
 # =========================================
 
 LINECHART_CARD = html.Div(
     [
         html.Div(
             [
+                # LEFT: Title & Info
                 html.Div(
                     [
-                        # Condensed Title and Subtitle on one line (mostly)
                         html.Div(
                             [
                                 html.H4(
@@ -131,13 +120,12 @@ LINECHART_CARD = html.Div(
                                     style={"display": "inline-block", "marginRight": "10px", "marginBottom": "0"}
                                 ),
                                 html.Span(
-                                    "| Satisfaction & Morale vs Patient Distribution & Bed Availability",
+                                    "| Satisfaction & Morale vs Patient Distribution",
                                     style={"color": MAIN_COLORS["text_secondary"], "fontSize": "0.9rem"}
                                 ),
                             ],
                             style={"marginBottom": "4px"}
                         ),
-                        # Single line for notes
                         html.P(
                             "* Streamgraph scale differs from metrics. Services selection applies globally.",
                             style={
@@ -148,12 +136,57 @@ LINECHART_CARD = html.Div(
                             },
                         ),
                     ],
-                    style={"flex": "1"},
+                    style={"flex": "1"}
                 ),
+
+                # RIGHT: Metrics Filter Box
+                html.Div(
+                    [
+                        html.Label(
+                            "Metrics:",
+                            style={
+                                "fontWeight": "bold",
+                                "fontSize": "0.85rem",
+                                "marginRight": "10px",
+                                "color": MAIN_COLORS["text"]
+                            }
+                        ),
+                        dcc.Checklist(
+                            id="metric-checklist",
+                            options=[
+                                {"label": "Patient Satisfaction", "value": "Patient Satisfaction"},
+                                {"label": "Staff Morale", "value": "Staff Morale"},
+                            ],
+                            value=["Patient Satisfaction"],
+                            className="custom-checklist",
+                            inline=True,  # Display horizontally
+                            inputStyle={"marginRight": "5px", "cursor": "pointer"},
+                            labelStyle={"marginRight": "15px", "display": "inline-flex", "alignItems": "center",
+                                        "cursor": "pointer"}
+                        ),
+                    ],
+                    style={
+                        "display": "flex",
+                        "alignItems": "center",
+                        "backgroundColor": "rgba(0, 0, 0, 0.05)",
+                        "padding": "8px 15px",
+                        "borderRadius": "8px",
+                        "boxShadow": "0 2px 5px rgba(0,0,0,0.1)",
+                    }
+                )
             ],
             className="graph-card-header",
-            # Padding to accommodate the floating button at Top-Left
-            style={"paddingLeft": "120px", "paddingTop": "15px", "paddingBottom": "10px"}
+            # Added display:flex to justify content (Title Left, Filter Right)
+            style={
+                "paddingLeft": "120px",
+                "paddingTop": "15px",
+                "paddingBottom": "10px",
+                "display": "flex",
+                "justifyContent": "space-between",
+                "alignItems": "center",
+                "flexWrap": "wrap",
+                "gap": "15px"
+            }
         ),
         dcc.Graph(
             id="line-chart",
@@ -303,6 +336,9 @@ VIOLIN_CHART_CONTAINER = html.Div(
                             value="satisfaction_from_patients",
                             inline=True,
                             className="custom-radio",
+                            inputStyle={"marginRight": "5px", "cursor": "pointer"},
+                            labelStyle={"marginRight": "15px", "display": "inline-flex", "alignItems": "center",
+                                        "cursor": "pointer"}
                         ),
 
                     ],
