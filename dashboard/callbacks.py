@@ -40,7 +40,7 @@ def _get_scatter_week_lookup(
     This replicates the same filtering logic used in create_scatter_plot
     so that pointIndex from selectedData can be used to look up weeks.
     """
-    dimensions = ["Satisfaction", "Morale", "Refused/Requested Ratio", "Staff/Patient Ratio"]
+    dimensions = ["Satisfaction", "Morale", "Refused/Admitted Ratio", "Staff/Patient Ratio"]
     df_plot = SCATTER_DATA[dimensions + ["Category", "Week"]]
 
     if services:
@@ -246,3 +246,31 @@ def update_scatter_plot(selected_services, relayout_data):
     services = normalize_services(selected_services)
 
     return create_scatter_plot(services, time_range)
+
+
+# =========================================================
+# NEW CALLBACK FOR SIDEBAR TOGGLE (UPDATED FOR LEFT SIDE)
+# =========================================================
+@callback(
+    Output("sidebar-overlay", "style"),
+    [Input("filter-button", "n_clicks"), Input("close-sidebar", "n_clicks")],
+    State("sidebar-overlay", "style"),
+    prevent_initial_call=True,
+)
+def toggle_sidebar(open_clicks, close_clicks, current_style):
+    """
+    Toggle the sidebar visibility by changing the 'left' CSS property.
+    0px = Visible (slid in from left)
+    -350px = Hidden (slid out to left)
+    """
+    ctx_id = ctx.triggered_id
+
+    # Create a copy of the current style to modify to ensure immutability
+    new_style = current_style.copy()
+
+    if ctx_id == "filter-button":
+        new_style["left"] = "0px"
+    elif ctx_id == "close-sidebar":
+        new_style["left"] = "-350px"
+
+    return new_style

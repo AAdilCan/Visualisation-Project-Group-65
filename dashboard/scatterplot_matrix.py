@@ -4,15 +4,9 @@ from dashboard.dash_data import SCATTER_DATA, SERVICES_MAPPING
 
 
 def create_scatter_plot(selected_services=None, time_range=None):
-    """
-    Create interactive Scatter Plot Matrix (SPLOM) using Plotly Express.
-    Features:
-    - Native Linked Brushing (Box Select works across all subplots)
-    - WebGL acceleration for performance
-    """
 
     # 1. Define dimensions
-    dimensions = ["Satisfaction", "Morale", "Refused/Requested Ratio", "Staff/Patient Ratio"]
+    dimensions = ["Satisfaction", "Morale", "Refused/Admitted Ratio", "Staff/Patient Ratio"]
 
     # 2. Filter data based on selection
     df_plot = SCATTER_DATA[dimensions + ["Category", "Week"]]
@@ -48,9 +42,6 @@ def create_scatter_plot(selected_services=None, time_range=None):
         return fig
 
     # 3. Create Matrix using Plotly Express
-    # px.scatter_matrix creates a Splom trace which supports linked selection natively
-    # Note: splom traces don't support customdata in selectedData events,
-    # so we use pointIndex in callbacks to look up week values
     fig = px.scatter_matrix(
         df_plot,
         dimensions=dimensions,
@@ -69,9 +60,8 @@ def create_scatter_plot(selected_services=None, time_range=None):
     # 5. Global Layout Configuration
     fig.update_layout(
         template=PLOTLY_TEMPLATE,
-        margin=dict(l=40, r=40, t=60, b=40),
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5, font=dict(size=10)),
-        # 'select' mode is active by default for immediate linked brushing
+        margin=dict(l=40, r=40, t=40, b=40),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, font=dict(size=10)),
         dragmode="select",
         hovermode="closest",
     )

@@ -1,4 +1,5 @@
 from dash import dcc, html
+import dash_bootstrap_components as dbc
 
 from dashboard.dash_data import (
     get_heatmap_data,
@@ -12,84 +13,147 @@ from dashboard.scatterplot_matrix import create_scatter_plot
 from dashboard.violinchart import create_violin_chart
 from dashboard.style import MAIN_COLORS
 
+# =========================================
+# 1. FLOATING FILTER BUTTON (TOP LEFT)
+# =========================================
+FILTER_BUTTON = html.Button(
+    "⚙️ Filters",
+    id="filter-button",
+    n_clicks=0,
+    style={
+        "position": "fixed",
+        "top": "30px",       # CHANGED: Fixed to Top
+        "left": "30px",      # CHANGED: Fixed to Left
+        "zIndex": "1050",
+        "padding": "10px 20px",
+        "backgroundColor": MAIN_COLORS["accent"],
+        "color": "white",
+        "border": "none",
+        "borderRadius": "50px",
+        "boxShadow": "0 4px 12px rgba(0,0,0,0.3)",
+        "fontSize": "1rem",
+        "cursor": "pointer",
+        "fontWeight": "bold",
+    },
+)
+
+# =========================================
+# 2. OVERLAY SIDEBAR
+# =========================================
+SIDEBAR_OVERLAY = html.Div(
+    [
+        # --- Header with Close Button ---
+        html.Div(
+            [
+                html.H3("Dashboard Filters", style={"margin": "0"}),
+                html.Button(
+                    "✕",
+                    id="close-sidebar",
+                    n_clicks=0,
+                    style={
+                        "background": "none",
+                        "border": "none",
+                        "fontSize": "1.5rem",
+                        "cursor": "pointer",
+                        "color": MAIN_COLORS["text_secondary"]
+                    }
+                )
+            ],
+            style={
+                "display": "flex",
+                "justifyContent": "space-between",
+                "alignItems": "center",
+                "marginBottom": "20px",
+                "borderBottom": f"1px solid {MAIN_COLORS['grid']}",
+                "paddingBottom": "10px"
+            }
+        ),
+
+        # --- Filters ---
+        html.Label("Select Services:", style={"fontWeight": "bold", "marginBottom": "8px", "display": "block"}),
+        dcc.Checklist(
+            id="services-checklist",
+            options=[{"label": label, "value": service} for service, label in SERVICES_MAPPING.items()],
+            value=[SERVICES[0]],
+            className="custom-checklist",
+            style={"display": "flex", "flexDirection": "column", "gap": "8px", "marginBottom": "25px"}
+        ),
+
+        html.Label("Select Metrics:", style={"fontWeight": "bold", "marginBottom": "8px", "display": "block"}),
+        dcc.Checklist(
+            id="metric-checklist",
+            options=[
+                {"label": "Patient Satisfaction", "value": "Patient Satisfaction"},
+                {"label": "Staff Morale", "value": "Staff Morale"},
+            ],
+            value=["Patient Satisfaction"],
+            className="custom-checklist",
+            style={"display": "flex", "flexDirection": "column", "gap": "8px", "marginBottom": "25px"}
+        ),
+
+        html.Div(
+            "ℹ️ These filters update all charts instantly.",
+            style={"marginTop": "auto", "fontSize": "0.85rem", "color": MAIN_COLORS["text_muted"]}
+        )
+    ],
+    id="sidebar-overlay",
+    style={
+        "position": "fixed",
+        "top": "0",
+        "left": "-350px",  # CHANGED: Hidden off-screen to the LEFT
+        "width": "300px",
+        "height": "100vh",
+        "backgroundColor": "white",
+        "boxShadow": "5px 0 15px rgba(0,0,0,0.2)",
+        "padding": "30px",
+        "zIndex": "1100",
+        "transition": "left 0.3s ease-in-out", # CHANGED: Animate 'left' property
+        "overflowY": "auto"
+    },
+)
+
+
+# =========================================
+# 3. LINECHART
+# =========================================
+
 LINECHART_CARD = html.Div(
     [
         html.Div(
             [
                 html.Div(
                     [
-                        html.H3("Services Weekly Performance"),
-                        html.P("Satisfaction Metrics for services" " against Patient Admissions and Bed Availability"),
-                        html.P(
-                            "* The scale for the streamgraph " "is not aligned with the metric scores.",
-                            style={
-                                "color": MAIN_COLORS["text_muted"],
-                                "fontSize": "0.75rem",
-                                "fontStyle": "italic",
-                            },
+                        # Condensed Title and Subtitle on one line (mostly)
+                        html.Div(
+                            [
+                                html.H4(
+                                    "Services Weekly Performance",
+                                    style={"display": "inline-block", "marginRight": "10px", "marginBottom": "0"}
+                                ),
+                                html.Span(
+                                    "| Satisfaction & Morale vs Patient Distribution & Bed Availability",
+                                    style={"color": MAIN_COLORS["text_secondary"], "fontSize": "0.9rem"}
+                                ),
+                            ],
+                            style={"marginBottom": "4px"}
                         ),
+                        # Single line for notes
                         html.P(
-                            "* Services selection applies to all figures.",
+                            "* Streamgraph scale differs from metrics. Services selection applies globally.",
                             style={
                                 "color": MAIN_COLORS["text_muted"],
                                 "fontSize": "0.75rem",
                                 "fontStyle": "italic",
-                            },
-                        ),
-                        html.P(
-                            "* Select a window with the slider to filter data on other figures.",
-                            style={
-                                "color": MAIN_COLORS["text_muted"],
-                                "fontSize": "0.75rem",
-                                "fontStyle": "italic",
+                                "margin": "0"
                             },
                         ),
                     ],
                     style={"flex": "1"},
                 ),
-                html.Div(
-                    [
-                        html.Label(
-                            "Services:",
-                            style={
-                                "color": MAIN_COLORS["text_secondary"],
-                                "marginBottom": "8px",
-                                "display": "block",
-                                "fontSize": "0.8rem",
-                            },
-                        ),
-                        dcc.Checklist(
-                            id="services-checklist",
-                            options=[{"label": label, "value": service} for service, label in SERVICES_MAPPING.items()],
-                            value=[SERVICES[0]],
-                            className="custom-checklist",
-                        ),
-                        html.Label(
-                            "Metrics:",
-                            style={
-                                "color": MAIN_COLORS["text_secondary"],
-                                "marginBottom": "8px",
-                                "display": "block",
-                                "fontSize": "0.8rem",
-                            },
-                        ),
-                        dcc.Checklist(
-                            id="metric-checklist",
-                            options=[
-                                {
-                                    "label": "Patient Satisfaction",
-                                    "value": "Patient Satisfaction",
-                                },
-                                {"label": "Staff Morale", "value": "Staff Morale"},
-                            ],
-                            value=["Patient Satisfaction"],
-                            className="custom-checklist",
-                        ),
-                    ],
-                    className="services-filters-container",
-                ),
             ],
             className="graph-card-header",
+            # Padding to accommodate the floating button at Top-Left
+            style={"paddingLeft": "120px", "paddingTop": "15px", "paddingBottom": "10px"}
         ),
         dcc.Graph(
             id="line-chart",
@@ -108,28 +172,43 @@ LINECHART_CARD = html.Div(
 )
 
 
+# =========================================
+# 4. SCATTERPLOT MATRIX
+# =========================================
+
 SCATTER_PLOT_CARD = html.Div(
     [
+        # Header Container
         html.Div(
             [
-                html.H3("Scatter Plot Analysis"),
-                html.P("Correlation Matrix of Service Metrics"),
-            ]
+                # LEFT: Title
+                html.Div(
+                    [
+                        html.H3("Scatter Plot Analysis", style={"margin": "10"}),
+                        html.P("Correlation Matrix of Service Metrics", style={"margin": "0"}),
+                    ],
+                    style={"flex": "1", "paddingLeft": "15px"}  # Added padding as requested
+                ),
+
+            ],
+            style={"display": "flex", "justifyContent": "space-between", "alignItems": "center", "marginBottom": "10px",
+                   "paddingTop": "10px"}
         ),
+
         dcc.Graph(
             id="scatter-plot",
             figure=create_scatter_plot(),
-            config={"responsive": False},
-            # Increased height to 750px. This allows the 4x4 matrix to be readable
-            # and roughly matches the height of the 2x2 Heatmaps block next to it.
-            style={"height": "750px"},
+            config={"responsive": True},
+            style={"height": "800px"},
         ),
     ],
     className="graph-card",
-    # Ensure the card itself fills the height of the grid cell
-    style={"height": "100%"},
+    style={"height": "100%", "padding": "10px"},
 )
 
+# =========================================
+# 5. HEATMAP
+# =========================================
 
 HEATMAPS_CONTAINER = html.Div(
     [
@@ -181,36 +260,73 @@ HEATMAPS_CONTAINER = html.Div(
 )
 
 
+# =========================================
+# 6. VIOLIN CHART
+# =========================================
+
 VIOLIN_CHART_CONTAINER = html.Div(
     [
         html.Div(
             [
-                html.H3("Distribution Analysis - Violin Chart"),
-                html.P("Value distribution across categories with box plot overlay"),
-            ]
-        ),
-        html.Div(
-            [
-                html.Label("Metric:", style={"color": MAIN_COLORS["text_secondary"], "marginRight": "15px"}),
-                dcc.RadioItems(
-                    id="violin-metric-radio",
-                    options=[
-                        {
-                            "label": "Patient Satisfaction",
-                            "value": "satisfaction_from_patients",
-                        },
-                        {"label": "Staff Morale", "value": "staff_morale"},
-                        {"label": "Refused/Admitted Ratio", "value": "ratio"},
+                # LEFT: Text Info
+                html.Div(
+                    [
+                        html.H3("Distribution Analysis - Violin Chart", style={"marginTop": "0"}),
+                        html.P(
+                            "Value distribution across categories with box plot overlay",
+                            style={"marginBottom": "0"}
+                        ),
                     ],
-                    value="satisfaction_from_patients",
-                    inline=True,
-                    style={"color": MAIN_COLORS["text"]},
-                    inputStyle={"marginRight": "5px", "marginLeft": "15px"},
-                    labelStyle={"display": "flex", "alignItems": "center"},
+                    style={"flex": "1"}
+                ),
+
+                # RIGHT: Boxed Controls
+                html.Div(
+                    [
+                        html.Label(
+                            "Select Metric:",
+                            style={
+                                "color": MAIN_COLORS["text"],
+                                "fontWeight": "bold",
+                                "marginBottom": "5px",
+                                "display": "block",
+                                "fontSize": "0.85rem"
+                            }
+                        ),
+                        dcc.RadioItems(
+                            id="violin-metric-radio",
+                            options=[
+                                {"label": "Patient Satisfaction", "value": "satisfaction_from_patients"},
+                                {"label": "Staff Morale", "value": "staff_morale"},
+                                {"label": "Refused/Admitted Ratio", "value": "ratio"},
+                            ],
+                            value="satisfaction_from_patients",
+                            inline=True,
+                            className="custom-radio",
+                        ),
+
+                    ],
+                    # Styling the container box
+                    style={
+                        "backgroundColor": "rgba(0, 0, 0, 0.05)",
+                        "padding": "10px 15px",
+                        "borderRadius": "8px",
+                        "boxShadow": "0 2px 5px rgba(0,0,0,0.1)",
+                        "minWidth": "300px"
+                    }
                 ),
             ],
-            style={"marginBottom": "20px", "display": "flex", "alignItems": "center"},
+            # Header Container Styles
+            style={
+                "display": "flex",
+                "justifyContent": "space-between",
+                "alignItems": "center",
+                "flexWrap": "wrap",
+                "gap": "15px",
+                "marginBottom": "15px"
+            }
         ),
+
         dcc.Graph(
             id="violin-chart",
             figure=create_violin_chart(SERVICES_DATA),
@@ -222,8 +338,14 @@ VIOLIN_CHART_CONTAINER = html.Div(
 )
 
 
+# =========================================
+# 7. LAYOUT
+# =========================================
+
 LAYOUT = html.Div(
     [
+        FILTER_BUTTON,
+        SIDEBAR_OVERLAY,
         # Header
         html.Div(
             [
@@ -231,6 +353,8 @@ LAYOUT = html.Div(
                 html.P("Explore interactive visualizations with real-time data insights"),
             ],
             className="dashboard-header",
+            # Add padding top/left to avoid overlap with fixed button
+            style={"paddingLeft": "80px", "paddingTop": "10px"}
         ),
         dcc.Store(id="global-week-store"),
         # Main Container

@@ -144,9 +144,7 @@ SCATTER_DATA = SERVICES_DATA.copy()
 
 SCATTER_DATA["Category"] = SCATTER_DATA["service"].map(SERVICES_MAPPING)
 
-SCATTER_DATA["Refused/Requested Ratio"] = SCATTER_DATA[
-    "patients_refused"
-] / SCATTER_DATA["patients_request"].replace(0, 1)
+SCATTER_DATA["Refused/Admitted Ratio"] = SCATTER_DATA["patients_refused"] / SCATTER_DATA["patients_admitted"].replace(0, 1)
 
 total_staff = SCATTER_DATA["doctors_count"] + SCATTER_DATA["nurses_count"]
 SCATTER_DATA["Staff/Patient Ratio"] = total_staff / SCATTER_DATA[
@@ -169,7 +167,7 @@ SCATTER_DATA = SCATTER_DATA[
         "Category",
         "Satisfaction",
         "Morale",
-        "Refused/Requested Ratio",
+        "Refused/Admitted Ratio",
         "Staff/Patient Ratio",
     ]
 ]
