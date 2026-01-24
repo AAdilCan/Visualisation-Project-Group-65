@@ -85,8 +85,8 @@ def create_heatmap(z_values, x_labels, y_labels, title):
 def update_heatmap(fig, z_values, x_labels, y_labels):
     """Updates an existing heatmap figure instead of recreating it."""
 
-    # 1. Update the data trace (z-values)
-    fig.update_traces(z=z_values, selector=dict(type="heatmap"))
+    # 1. Update the data trace (z-values, x_labels, and y_labels)
+    fig.update_traces(z=z_values, x=x_labels, y=y_labels, selector=dict(type="heatmap"))
 
     # 2. Recalculate annotations efficiently
     max_val = max(max(row) for row in z_values) if z_values and z_values[0] else 1
@@ -107,7 +107,6 @@ def update_heatmap(fig, z_values, x_labels, y_labels):
                         font=dict(color=text_color, size=10, weight=500),
                     )
                 )
-
     # 3. Use batch_update to push layout changes in one go
     with fig.batch_update():
         fig.layout.annotations = new_annotations

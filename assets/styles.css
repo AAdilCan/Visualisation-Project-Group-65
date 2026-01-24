@@ -8,21 +8,19 @@
 
 /* CSS Variables - Professional Hospital Theme */
 :root {
-    --bg-primary: #f0f4f8;
+    --bg-primary: #f8fafc;
     --bg-secondary: #ffffff;
     --bg-card: #ffffff;
-    --bg-card-hover: #fafbfc;
-    --accent-primary: #0077b6;
-    --accent-secondary: #00b4d8;
-    --accent-tertiary: #48cae4;
-    --accent-gradient: linear-gradient(135deg, #0077b6 0%, #00b4d8 50%, #48cae4 100%);
-    --text-primary: #1e3a5f;
-    --text-secondary: #4a6fa5;
-    --text-muted: #7b9bc0;
-    --border-color: #d0dce8;
-    --shadow-glow: 0 0 20px rgba(0, 119, 182, 0.08);
-    --shadow-card: 0 2px 12px rgba(30, 58, 95, 0.08);
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --bg-card-hover: #ffffff;
+    --accent-primary: #2563eb;
+    --accent-gradient: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+    --text-primary: #1e293b;
+    --text-secondary: #475569;
+    --text-muted: #94a3b8;
+    --border-color: #e2e8f0;
+    --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-glow: 0 10px 15px -3px rgba(37, 99, 235, 0.1);
+    --transition-smooth: all 0.2s ease-in-out;
 }
 
 /* Reset & Base */
@@ -116,13 +114,6 @@ body::before {
     transition: var(--transition-smooth);
     position: relative;
     overflow: hidden;
-}
-
-.graph-card:hover {
-    background: var(--bg-card-hover);
-    border-color: rgba(99, 102, 241, 0.4);
-    box-shadow: var(--shadow-glow);
-    transform: translateY(-2px);
 }
 
 .graph-card h3 {
