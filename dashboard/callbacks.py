@@ -2,11 +2,17 @@ from plotly.graph_objects import Figure
 
 from dash import callback, ctx, Output, Input, State
 
-from dashboard.linechart import create_line_chart
+from dashboard.linechart import linechart_fig, update_line_chart
 from dashboard.scatterplot_matrix import create_scatter_plot
 from dashboard.violinchart import create_violin_chart
-from dashboard.heatmap import create_heatmap
-from dashboard.dash_data import get_heatmap_data, SERVICES_DATA, SERVICES, SCATTER_DATA, SERVICES_MAPPING
+from dashboard.heatmap import heatmap_figs, update_heatmap
+from dashboard.dash_data import (
+    get_heatmap_data,
+    SERVICES_DATA,
+    SERVICES,
+    SCATTER_DATA,
+    SERVICES_MAPPING,
+)
 
 
 def normalize_services(selected_services: list[str] | None) -> list[str]:
@@ -40,16 +46,25 @@ def _get_scatter_week_lookup(
     This replicates the same filtering logic used in create_scatter_plot
     so that pointIndex from selectedData can be used to look up weeks.
     """
-    dimensions = ["Satisfaction", "Morale", "Refused/Requested Ratio", "Staff/Patient Ratio"]
+    dimensions = [
+        "Satisfaction",
+        "Morale",
+        "Refused/Requested Ratio",
+        "Staff/Patient Ratio",
+    ]
     df_plot = SCATTER_DATA[dimensions + ["Category", "Week"]]
 
     if services:
-        selected_labels = [SERVICES_MAPPING[s] for s in services if s in SERVICES_MAPPING]
+        selected_labels = [
+            SERVICES_MAPPING[s] for s in services if s in SERVICES_MAPPING
+        ]
         df_plot = df_plot[df_plot["Category"].isin(selected_labels)]
 
     if time_range:
         start_week, end_week = time_range
-        df_plot = df_plot[(df_plot["Week"] >= start_week) & (df_plot["Week"] <= end_week)]
+        df_plot = df_plot[
+            (df_plot["Week"] >= start_week) & (df_plot["Week"] <= end_week)
+        ]
 
     # Return weeks as a list indexed by row position (matching pointIndex)
     return df_plot["Week"].tolist()
@@ -68,7 +83,7 @@ def _get_scatter_week_lookup(
     ],
     prevent_initial_call=True,
 )
-def update_heatmaps(attribute, relayout_data):
+def update_heatmaps_cb(attribute, relayout_data):
     """Update all 4 heatmaps based on attribute selection and time range."""
 
     # Extract week range from line chart selection
@@ -92,9 +107,11 @@ def update_heatmaps(attribute, relayout_data):
     ]
 
     figures = []
-    for service_id, service_name in services:
-        z_values, x_labels, y_labels = get_heatmap_data(attribute, service_id, week_range)
-        fig = create_heatmap(z_values, x_labels, y_labels, service_name)
+    for service_id, fig in heatmap_figs.items():
+        z_values, x_labels, y_labels = get_heatmap_data(
+            attribute, service_id, week_range
+        )
+        fig = update_heatmap(fig, z_values, x_labels, y_labels)
         figures.append(fig)
 
     return figures
@@ -112,7 +129,7 @@ def update_heatmaps(attribute, relayout_data):
         State("line-chart", "figure"),
     ],
 )
-def update_line_chart(
+def update_line_chart_cb(
     selected_metrics: list[str],
     selected_services: list[str] | None,
     scatter_selected_data: dict | None,
@@ -142,7 +159,10 @@ def update_line_chart(
             r = relayout_data["xaxis.range"]
             time_range = (r[0], r[1])
         elif "xaxis.range[0]" in relayout_data and "xaxis.range[1]" in relayout_data:
-            time_range = (relayout_data["xaxis.range[0]"], relayout_data["xaxis.range[1]"])
+            time_range = (
+                relayout_data["xaxis.range[0]"],
+                relayout_data["xaxis.range[1]"],
+            )
 
     # Determine which input triggered the callback
     triggered_id = ctx.triggered_id
@@ -155,7 +175,9 @@ def update_line_chart(
 
     # Check if scatter plot has a non-empty selection
     has_scatter_selection = (
-        scatter_selected_data and "points" in scatter_selected_data and len(scatter_selected_data["points"]) > 0
+        scatter_selected_data
+        and "points" in scatter_selected_data
+        and len(scatter_selected_data["points"]) > 0
     )
 
     if triggered_id == "scatter-plot" and has_scatter_selection:
@@ -180,7 +202,15 @@ def update_line_chart(
         if current_fig and "layout" in current_fig:
             existing_shapes = current_fig["layout"].get("shapes", [])
 
-    return create_line_chart(selected_metrics, services, xaxis_range, selected_weeks, existing_shapes)
+    # Use the pre-initialized figure and update it using batch_update
+    return update_line_chart(
+        linechart_fig,
+        selected_metrics,
+        services,
+        xaxis_range,
+        selected_weeks,
+        existing_shapes,
+    )
 
 
 @callback(
@@ -210,7 +240,8 @@ def update_violin_chart(selected_metric, relayout_data, selected_services):
             data = data[(data["week"] >= r[0]) & (data["week"] <= r[1])]
         elif "xaxis.range[0]" in relayout_data and "xaxis.range[1]" in relayout_data:
             data = data[
-                (data["week"] >= relayout_data["xaxis.range[0]"]) & (data["week"] <= relayout_data["xaxis.range[1]"])
+                (data["week"] >= relayout_data["xaxis.range[0]"])
+                & (data["week"] <= relayout_data["xaxis.range[1]"])
             ]
 
     # 2. Call chart creator

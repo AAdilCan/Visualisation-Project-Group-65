@@ -1,5 +1,6 @@
 from plotly import graph_objects as go
 
+from dashboard.dash_data import get_heatmap_data
 from dashboard.style import HEATMAP_COLORSCALE, PLOTLY_TEMPLATE, MAIN_COLORS
 
 # Get border color from MAIN_COLORS
@@ -26,7 +27,9 @@ def create_heatmap(z_values, x_labels, y_labels, title):
             colorscale=HEATMAP_COLORSCALE,
             showscale=True,
             colorbar=dict(
-                title=dict(text="Patients", side="right", font=dict(color=MAIN_COLORS["text"])),
+                title=dict(
+                    text="Patients", side="right", font=dict(color=MAIN_COLORS["text"])
+                ),
                 tickfont=dict(color=MAIN_COLORS["text_secondary"]),
                 outlinecolor=MAIN_COLORS["border"],
                 outlinewidth=1,
@@ -58,7 +61,10 @@ def create_heatmap(z_values, x_labels, y_labels, title):
         margin=dict(l=60, r=20, t=50, b=50),
         title=dict(text=title, font=dict(size=14, color=MAIN_COLORS["text"]), x=0.5),
         xaxis=dict(
-            title=dict(text="Patient Satisfaction", font=dict(size=11, color=MAIN_COLORS["text_secondary"])),
+            title=dict(
+                text="Patient Satisfaction",
+                font=dict(size=11, color=MAIN_COLORS["text_secondary"]),
+            ),
             tickfont=dict(size=10, color=MAIN_COLORS["text_secondary"]),
             linecolor=MAIN_COLORS["border"],
             linewidth=1,
@@ -74,3 +80,50 @@ def create_heatmap(z_values, x_labels, y_labels, title):
     )
 
     return fig
+
+
+def update_heatmap(fig, z_values, x_labels, y_labels):
+    """Updates an existing heatmap figure instead of recreating it."""
+
+    # 1. Update the data trace (z-values)
+    fig.update_traces(z=z_values, selector=dict(type="heatmap"))
+
+    # 2. Recalculate annotations efficiently
+    max_val = max(max(row) for row in z_values) if z_values and z_values[0] else 1
+    new_annotations = []
+
+    for i, row in enumerate(z_values):
+        for j, val in enumerate(row):
+            if i < len(y_labels) and j < len(x_labels):
+                cell_darkness = val / max_val if max_val > 0 else 0
+                text_color = "#ffffff" if cell_darkness > 0.5 else MAIN_COLORS["text"]
+
+                new_annotations.append(
+                    dict(
+                        x=x_labels[j],
+                        y=y_labels[i],
+                        text=str(val),
+                        showarrow=False,
+                        font=dict(color=text_color, size=10, weight=500),
+                    )
+                )
+
+    # 3. Use batch_update to push layout changes in one go
+    with fig.batch_update():
+        fig.layout.annotations = new_annotations
+
+    return fig
+
+
+heatmap_fig_1 = create_heatmap(*get_heatmap_data("age_bin", "emergency"), "Emergency")
+heatmap_fig_2 = create_heatmap(*get_heatmap_data("age_bin", "ICU"), "ICU")
+heatmap_fig_3 = create_heatmap(*get_heatmap_data("age_bin", "surgery"), "Surgery")
+heatmap_fig_4 = create_heatmap(
+    *get_heatmap_data("age_bin", "general_medicine"), "General Medicine"
+)
+heatmap_figs = {
+    "emergency": heatmap_fig_1,
+    "ICU": heatmap_fig_2,
+    "surgery": heatmap_fig_3,
+    "general_medicine": heatmap_fig_4,
+}

@@ -1,6 +1,6 @@
 import plotly.express as px
 from plotly.subplots import go
-from dashboard.dash_data import STREAM_DATA
+from dashboard.dash_data import STREAM_DATA, SERVICES
 from dashboard.style import (
     CHART_COLORS,
     PLOTLY_TEMPLATE,
@@ -32,7 +32,8 @@ def _create_lines(fig, selected_metrics, selected_services, metric_labels):
                     mode="lines+markers",
                     line=line_style,
                     hovertemplate=(
-                        f"<b>{cat}</b><br>{metric_labels[metric]}<br>" "Week: %{x}<br>Value: %{y:.1f}<extra></extra>"
+                        f"<b>{cat}</b><br>{metric_labels[metric]}<br>"
+                        "Week: %{x}<br>Value: %{y:.1f}<extra></extra>"
                     ),
                 )
             )
@@ -52,7 +53,8 @@ def _create_lines(fig, selected_metrics, selected_services, metric_labels):
                     dash="dot" if j == 0 else "longdashdot",
                 ),
                 hovertemplate=(
-                    f"<b>Average {metric_labels[metric]}</b><br>" "Week: %{x}<br>Value: %{y:.1f}<extra></extra>"
+                    f"<b>Average {metric_labels[metric]}</b><br>"
+                    "Week: %{x}<br>Value: %{y:.1f}<extra></extra>"
                 ),
             )
         )
@@ -65,23 +67,70 @@ def _create_vertical_lines(fig: go.Figure, selected_weeks: list[int]) -> None:
         fig: Plotly figure object to add vertical lines to
         selected_weeks: List of week numbers where vertical lines should be drawn
     """
+    shapes, annotations = _create_vertical_lines_shapes(selected_weeks)
+    if shapes:
+        if fig.layout.shapes:
+            fig.layout.shapes.extend(shapes)
+        else:
+            fig.layout.shapes = shapes
+    if annotations:
+        if fig.layout.annotations:
+            fig.layout.annotations.extend(annotations)
+        else:
+            fig.layout.annotations = annotations
+
+
+def _create_vertical_lines_shapes(
+    selected_weeks: list[int],
+) -> tuple[list[dict], list[dict]]:
+    """Create shape and annotation dictionaries for vertical lines (for use inside batch_update).
+
+    Args:
+        selected_weeks: List of week numbers where vertical lines should be drawn
+
+    Returns:
+        Tuple of (shapes, annotations) to add to fig.layout
+    """
     if not selected_weeks:
-        return
+        return [], []
 
     # Get unique weeks to avoid duplicate lines
     unique_weeks = sorted(set(int(w) for w in selected_weeks))
 
+    shapes = []
+    annotations = []
     for week in unique_weeks:
-        fig.add_vline(
-            x=week,
-            line_dash="dash",
-            line_color=MAIN_COLORS["highlight"],
-            line_width=2,
-            annotation_text=f"W{week}",
-            annotation_position="top",
-            annotation_font_size=10,
-            annotation_font_color=MAIN_COLORS["highlight"],
+        # Create shape for the vertical line
+        shapes.append(
+            dict(
+                type="line",
+                xref="x",
+                yref="paper",
+                x0=week,
+                x1=week,
+                y0=0,
+                y1=1,
+                line=dict(
+                    color=MAIN_COLORS["highlight"],
+                    width=2,
+                    dash="dash",
+                ),
+            )
         )
+        # Create annotation for the week label
+        annotations.append(
+            dict(
+                text=f"W{week}",
+                showarrow=False,
+                x=week,
+                y=1.02,
+                yref="paper",
+                xref="x",
+                font=dict(size=10, color=MAIN_COLORS["highlight"]),
+            )
+        )
+
+    return shapes, annotations
 
 
 def _create_stream_graph(fig, selected_services):
@@ -207,8 +256,109 @@ def create_line_chart(
             font=dict(size=10),
         ),
         xaxis=xaxis_config,
-        yaxis=dict(title="Metric Value", range=[0, 100], tickvals=[60, 70, 80, 90, 100]),
+        yaxis=dict(
+            title="Metric Value", range=[0, 100], tickvals=[60, 70, 80, 90, 100]
+        ),
         hovermode="x unified",
     )
 
     return fig
+
+
+def update_line_chart(
+    fig: go.Figure,
+    selected_metrics: list[str],
+    selected_services: list[str],
+    xaxis_range: list[float] | None = None,
+    selected_weeks: list[int] | None = None,
+    existing_shapes: list | None = None,
+) -> go.Figure:
+    """Update an existing line chart figure instead of recreating it.
+
+    Args:
+        fig: Existing Plotly figure to update
+        selected_metrics: List of metrics to display
+        selected_services: List of services to display
+        xaxis_range: Optional list [min, max] to preserve x-axis zoom state (weeks)
+        selected_weeks: Optional list of week numbers to highlight with vertical lines
+        existing_shapes: Optional list of shapes to preserve (e.g., vertical lines from previous state)
+    """
+    # Metric display names for labels
+    metric_labels = {
+        "Patient Satisfaction": "Patient Satisfaction",
+        "Staff Morale": "Staff Morale",
+    }
+
+    # Use batch_update to push all changes in one go
+    with fig.batch_update():
+        # Clear all existing traces
+        fig.data = []
+
+        # Rebuild the chart
+        _create_stream_graph(fig, selected_services)
+        _create_lines(fig, selected_metrics, selected_services, metric_labels)
+
+        # Add vertical lines for selected weeks from scatter plot
+        # If selected_weeks provided, create new vertical lines; otherwise use existing_shapes
+        if selected_weeks is not None:
+            # Clear existing shapes and annotations before adding new ones
+            if fig.layout.shapes:
+                fig.layout.shapes = []
+            if fig.layout.annotations:
+                fig.layout.annotations = []
+
+            shapes, annotations = _create_vertical_lines_shapes(selected_weeks)
+            if shapes:
+                fig.layout.shapes = shapes
+            if annotations:
+                fig.layout.annotations = annotations
+        elif existing_shapes:
+            # Preserve existing vertical lines from previous figure state
+            # Clear shapes first, then set to existing
+            if fig.layout.shapes:
+                fig.layout.shapes = []
+            fig.layout.shapes = existing_shapes
+            # Note: annotations from previous vertical lines are lost when preserving shapes this way
+            # This matches the original behavior where only shapes were preserved
+
+        # Build xaxis config, preserving range if provided
+        # Default range is 1-52 (weeks) to avoid empty space on the chart
+        xaxis_config = dict(
+            rangeslider=dict(visible=True), type="linear", range=[1, 52]
+        )
+        if xaxis_range is not None:
+            xaxis_config["range"] = xaxis_range
+
+        # Update layout settings
+        fig.update_layout(
+            # uirevision preserves legend visibility and other UI state when constant
+            uirevision="line-chart-constant",
+            template=PLOTLY_TEMPLATE,
+            height=600,
+            margin=dict(l=50, r=30, t=30, b=30),
+            legend=dict(
+                orientation="h",
+                yanchor="bottom",
+                y=1.02,
+                xanchor="center",
+                x=0.5,
+                font=dict(size=10),
+            ),
+            xaxis=xaxis_config,
+            yaxis=dict(
+                title="Metric Value", range=[0, 100], tickvals=[60, 70, 80, 90, 100]
+            ),
+            hovermode="x unified",
+        )
+
+    return fig
+
+
+# Create pre-initialized figure with default values
+linechart_fig = create_line_chart(
+    selected_metrics=["Patient Satisfaction"],
+    selected_services=[SERVICES[0]],
+    xaxis_range=None,
+    selected_weeks=None,
+    existing_shapes=None,
+)

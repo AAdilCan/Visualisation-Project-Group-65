@@ -6,8 +6,14 @@ from dashboard.dash_data import (
     SERVICES_MAPPING,
     SERVICES_DATA,
 )
-from dashboard.heatmap import create_heatmap
-from dashboard.linechart import create_line_chart
+from dashboard.heatmap import (
+    create_heatmap,
+    heatmap_fig_1,
+    heatmap_fig_2,
+    heatmap_fig_3,
+    heatmap_fig_4,
+)
+from dashboard.linechart import linechart_fig
 from dashboard.scatterplot_matrix import create_scatter_plot
 from dashboard.violinchart import create_violin_chart
 from dashboard.style import MAIN_COLORS
@@ -19,9 +25,13 @@ LINECHART_CARD = html.Div(
                 html.Div(
                     [
                         html.H3("Services Weekly Performance"),
-                        html.P("Satisfaction Metrics for services" " against Patient Admissions and Bed Availability"),
                         html.P(
-                            "* The scale for the streamgraph " "is not aligned with the metric scores.",
+                            "Satisfaction Metrics for services"
+                            " against Patient Admissions and Bed Availability"
+                        ),
+                        html.P(
+                            "* The scale for the streamgraph "
+                            "is not aligned with the metric scores.",
                             style={
                                 "color": MAIN_COLORS["text_muted"],
                                 "fontSize": "0.75rem",
@@ -60,7 +70,10 @@ LINECHART_CARD = html.Div(
                         ),
                         dcc.Checklist(
                             id="services-checklist",
-                            options=[{"label": label, "value": service} for service, label in SERVICES_MAPPING.items()],
+                            options=[
+                                {"label": label, "value": service}
+                                for service, label in SERVICES_MAPPING.items()
+                            ],
                             value=[SERVICES[0]],
                             className="custom-checklist",
                         ),
@@ -93,7 +106,7 @@ LINECHART_CARD = html.Div(
         ),
         dcc.Graph(
             id="line-chart",
-            figure=create_line_chart(["Patient Satisfaction"], [SERVICES[0]]),
+            figure=linechart_fig,
             config={"responsive": False},
             style={"height": "600px"},
         ),
@@ -138,7 +151,9 @@ HEATMAPS_CONTAINER = html.Div(
                 html.Div(
                     [
                         html.H3("Patient Satisfaction Heatmaps"),
-                        html.P("Distribution of patients across satisfaction levels by service"),
+                        html.P(
+                            "Distribution of patients across satisfaction levels by service"
+                        ),
                     ],
                     style={"flex": "1"},
                 ),
@@ -174,22 +189,22 @@ HEATMAPS_CONTAINER = html.Div(
             [
                 dcc.Graph(
                     id="heatmap-emergency",
-                    figure=create_heatmap(*get_heatmap_data("age_bin", "emergency"), "Emergency"),
+                    figure=heatmap_fig_1,
                     config={"responsive": True},
                 ),
                 dcc.Graph(
                     id="heatmap-icu",
-                    figure=create_heatmap(*get_heatmap_data("age_bin", "ICU"), "ICU"),
+                    figure=heatmap_fig_2,
                     config={"responsive": True},
                 ),
                 dcc.Graph(
                     id="heatmap-surgery",
-                    figure=create_heatmap(*get_heatmap_data("age_bin", "surgery"), "Surgery"),
+                    figure=heatmap_fig_3,
                     config={"responsive": True},
                 ),
                 dcc.Graph(
                     id="heatmap-general-medicine",
-                    figure=create_heatmap(*get_heatmap_data("age_bin", "general_medicine"), "General Medicine"),
+                    figure=heatmap_fig_4,
                     config={"responsive": True},
                 ),
             ],
@@ -217,7 +232,13 @@ VIOLIN_CHART_CONTAINER = html.Div(
         ),
         html.Div(
             [
-                html.Label("Metric:", style={"color": MAIN_COLORS["text_secondary"], "marginRight": "15px"}),
+                html.Label(
+                    "Metric:",
+                    style={
+                        "color": MAIN_COLORS["text_secondary"],
+                        "marginRight": "15px",
+                    },
+                ),
                 dcc.RadioItems(
                     id="violin-metric-radio",
                     options=[
@@ -254,7 +275,9 @@ LAYOUT = html.Div(
         html.Div(
             [
                 html.H1("Data Analysis & Visualization Dashboard"),
-                html.P("Explore interactive visualizations with real-time data insights"),
+                html.P(
+                    "Explore interactive visualizations with real-time data insights"
+                ),
             ],
             className="dashboard-header",
         ),
