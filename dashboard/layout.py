@@ -1,14 +1,10 @@
 from dash import dcc, html
-import dash_bootstrap_components as dbc
 
 from dashboard.dash_data import (
-    get_heatmap_data,
     SERVICES,
     SERVICES_MAPPING,
-    SERVICES_DATA,
 )
 from dashboard.heatmap import (
-    create_heatmap,
     heatmap_fig_1,
     heatmap_fig_2,
     heatmap_fig_3,
@@ -16,7 +12,7 @@ from dashboard.heatmap import (
 )
 from dashboard.linechart import linechart_fig
 from dashboard.scatterplot_matrix import scatterplot_fig
-from dashboard.violinchart import create_violin_chart
+from dashboard.violinchart import violin_fig
 from dashboard.style import MAIN_COLORS
 
 # =========================================
@@ -81,10 +77,7 @@ SIDEBAR_OVERLAY = html.Div(
         ),
         dcc.Checklist(
             id="services-checklist",
-            options=[
-                {"label": label, "value": service}
-                for service, label in SERVICES_MAPPING.items()
-            ],
+            options=[{"label": label, "value": service} for service, label in SERVICES_MAPPING.items()],
             value=[SERVICES[0]],
             className="custom-checklist",
             style={
@@ -290,9 +283,7 @@ HEATMAPS_CONTAINER = html.Div(
                 html.Div(
                     [
                         html.H3("Patient Satisfaction Heatmaps"),
-                        html.P(
-                            "Distribution of patients across satisfaction levels by service"
-                        ),
+                        html.P("Distribution of patients across satisfaction levels by service"),
                     ],
                     style={"flex": "1"},
                 ),
@@ -440,7 +431,7 @@ VIOLIN_CHART_CONTAINER = html.Div(
         ),
         dcc.Graph(
             id="violin-chart",
-            figure=create_violin_chart(SERVICES_DATA),
+            figure=violin_fig,
             config={"responsive": False},
             style={"height": "400px"},
         ),
@@ -461,15 +452,13 @@ LAYOUT = html.Div(
         html.Div(
             [
                 html.H1("Data Analysis & Visualization Dashboard"),
-                html.P(
-                    "Explore interactive visualizations with real-time data insights"
-                ),
+                html.P("Explore interactive visualizations with real-time data insights"),
             ],
             className="dashboard-header",
             # Add padding top/left to avoid overlap with fixed button
             style={"paddingLeft": "80px", "paddingTop": "10px"},
         ),
-        dcc.Store(id="global-week-store"),
+        dcc.Store(id="time-range-store", data=None),
         # Main Container
         html.Div(
             [

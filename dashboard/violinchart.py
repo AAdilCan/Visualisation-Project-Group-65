@@ -1,46 +1,6 @@
 from plotly.subplots import go
-from dashboard.dash_data import EVENT_MAP, EVENTS, SERVICES, SERVICES_MAPPING
+from dashboard.dash_data import EVENT_MAP, EVENTS, METRIC_DISPLAY_NAME, SERVICES, SERVICES_MAPPING, VIOLIN_DATA
 from dashboard.style import CHART_COLORS, PLOTLY_TEMPLATE, VIOLIN_CHART_COLORS
-
-
-def _filter_data_by_services(data, selected_services):
-    """
-    Filter data by selected services.
-    """
-    if selected_services is None:
-        selected_services = SERVICES
-
-    filtered_data = data
-    filtered_data = filtered_data[filtered_data["service"].isin(selected_services)]
-
-    return filtered_data, selected_services
-
-
-def _calculate_metric(filtered_data, metric):
-    """
-    Calculate the appropriate metric and return y-axis label.
-    """
-    if metric == "ratio":
-        # Avoid division by zero by replacing 0 with 1
-        admitted = filtered_data["patients_admitted"].replace(0, 1)
-        filtered_data["ratio"] = filtered_data["patients_refused"] / admitted
-        return filtered_data, "ratio", "Refused/Admitted Ratio"
-    elif metric == "satisfaction_from_patients":
-        return filtered_data, metric, "Patient Satisfaction"
-    elif metric == "staff_morale":
-        return filtered_data, metric, "Staff Morale"
-    else:
-        return filtered_data, metric, "Value"
-
-
-def _get_service_colors(selected_services):
-    """
-    Assign colors to services using CHART_COLORS from style.py.
-    """
-    service_colors = {}
-    for i, service in enumerate(SERVICES_MAPPING.keys()):
-        service_colors[service] = CHART_COLORS[i % len(CHART_COLORS)]
-    return service_colors
 
 
 def _calculate_violin_offsets(selected_services, total_group_width=0.8):
@@ -61,19 +21,18 @@ def _calculate_violin_offsets(selected_services, total_group_width=0.8):
 
 def _add_violin_traces(
     fig,
-    data,
     selected_services,
     service_colors,
     service_offsets,
     violin_width,
-    plot_metric,
+    metric,
     y_label,
 ):
     """
     Add violin traces for ALL events (including None), split by service.
     """
     for service in selected_services:
-        service_data = data[data["service"] == service]
+        service_data = VIOLIN_DATA[VIOLIN_DATA["service"] == service]
 
         if service_data.empty:
             continue
@@ -88,7 +47,7 @@ def _add_violin_traces(
         fig.add_trace(
             go.Violin(
                 x=x_values,
-                y=service_data[plot_metric],
+                y=service_data[metric],
                 name=service_name,
                 legendgroup=service_name,
                 scalegroup=service_name,
@@ -101,7 +60,9 @@ def _add_violin_traces(
                 points=False,
                 # --- NEW: Add customdata for correct hover info ---
                 customdata=service_data["event"],
-                hovertemplate=f"<b>{service_name}</b><br>Event: %{{customdata}}<br>{y_label}: %{{y:.2f}}<extra></extra>",
+                hovertemplate=(
+                    f"<b>{service_name}</b><br>" "Event: %{{customdata}}<br>" f"{y_label}: %{{y:.2f}}<extra></extra>"
+                ),
             )
         )
 
@@ -127,31 +88,18 @@ def _configure_layout(fig, y_label, unique_events):
     )
 
 
-def create_violin_chart(
-    data, metric="satisfaction_from_patients", selected_services=None
-):
-    """
-    Create violin chart using real data, grouped by Event.
-    """
-    # Early return for empty data
-    if data is None or data.empty:
-        return go.Figure()
+def create_violin_chart(metric: str, selected_services: list[str]) -> go.Figure:
+    """Create violin chart using real data, grouped by Event.
 
-    # Filter data by selected services
-    filtered_data, selected_services = _filter_data_by_services(data, selected_services)
-
+    Args:
+        metric: Metric to display on y-axis
+        selected_services: List of services to display
+    """
     # Calculate metric and get y-axis label
-    filtered_data, plot_metric, y_label = _calculate_metric(filtered_data, metric)
-
-    # Check for event column
-    if "event" not in filtered_data.columns:
-        return go.Figure()
+    y_label = METRIC_DISPLAY_NAME[metric]
 
     # Get service colors from style.py
-    service_colors = _get_service_colors(selected_services)
-
-    # # Prepare event data (Unified: 'None' is just another event now)
-    # processed_data, unique_events, event_map = _prepare_event_data(filtered_data)
+    service_colors = {service: CHART_COLORS[i % len(CHART_COLORS)] for i, service in enumerate(SERVICES_MAPPING.keys())}
 
     # Calculate violin positioning offsets
     service_offsets, violin_width = _calculate_violin_offsets(selected_services)
@@ -162,13 +110,11 @@ def create_violin_chart(
     # Add traces (Handles both Active events and None events identically)
     _add_violin_traces(
         fig=fig,
-        data=filtered_data,
         selected_services=selected_services,
         service_colors=service_colors,
         service_offsets=service_offsets,
         violin_width=violin_width,
-        # event_map=EVENT_MAP,
-        plot_metric=plot_metric,
+        metric=metric,
         y_label=y_label,
     )
 
@@ -176,3 +122,52 @@ def create_violin_chart(
     _configure_layout(fig=fig, y_label=y_label, unique_events=EVENTS)
 
     return fig
+
+
+def update_violin_chart(fig: go.Figure, metric: str, selected_services: list[str]) -> go.Figure:
+    """Update an existing violin chart figure instead of recreating it.
+
+    Args:
+        fig: Existing Plotly figure to update
+        metric: Metric to display on y-axis
+        selected_services: List of services to display
+
+    Returns:
+        Updated Plotly figure
+    """
+    # Calculate metric and get y-axis label
+    y_label = METRIC_DISPLAY_NAME[metric]
+
+    # Get service colors from style.py
+    service_colors = {service: CHART_COLORS[i % len(CHART_COLORS)] for i, service in enumerate(SERVICES_MAPPING.keys())}
+
+    # Calculate violin positioning offsets
+    service_offsets, violin_width = _calculate_violin_offsets(selected_services)
+
+    # Use batch_update to push all changes in one go
+    with fig.batch_update():
+        # Clear all existing traces
+        fig.data = []
+
+        # Rebuild the chart
+        _add_violin_traces(
+            fig=fig,
+            selected_services=selected_services,
+            service_colors=service_colors,
+            service_offsets=service_offsets,
+            violin_width=violin_width,
+            metric=metric,
+            y_label=y_label,
+        )
+
+        # Configure layout
+        _configure_layout(fig=fig, y_label=y_label, unique_events=EVENTS)
+
+    return fig
+
+
+# Create pre-initialized figure with default values
+violin_fig = create_violin_chart(
+    metric="satisfaction_from_patients",
+    selected_services=SERVICES,
+)

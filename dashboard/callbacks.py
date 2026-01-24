@@ -1,10 +1,11 @@
 from plotly.graph_objects import Figure
 
 from dash import callback, ctx, Output, Input, State
+from dash.exceptions import PreventUpdate
 
 from dashboard.linechart import linechart_fig, update_line_chart
 from dashboard.scatterplot_matrix import scatterplot_fig, update_scatter_plot
-from dashboard.violinchart import create_violin_chart
+from dashboard.violinchart import violin_fig, update_violin_chart
 from dashboard.heatmap import heatmap_figs, update_heatmap
 from dashboard.dash_data import (
     get_heatmap_data,
@@ -12,7 +13,43 @@ from dashboard.dash_data import (
     SERVICES,
     SCATTER_DATA,
     SERVICES_MAPPING,
+    EVENTS,
 )
+
+
+@callback(
+    Output("time-range-store", "data"),
+    Input("line-chart", "relayoutData"),
+    prevent_initial_call=True,
+)
+def update_time_range_store(relayout_data: dict | None) -> dict | None:
+    """Extract and store time range from line chart zoom/pan events.
+
+    Only updates when xaxis.range changes, ignoring spurious layout events
+    like autosize, width, height changes that cause excessive callbacks.
+
+    Args:
+        relayout_data: Layout data from line chart interactions
+
+    Returns:
+        Dictionary with start/end weeks or None for full range
+    """
+    if not relayout_data:
+        return None
+
+    # Check for xaxis range keys - these indicate actual zoom/pan
+    if "xaxis.range" in relayout_data:
+        r = relayout_data["xaxis.range"]
+        return {"start": r[0], "end": r[1]}
+    elif "xaxis.range[0]" in relayout_data and "xaxis.range[1]" in relayout_data:
+        return {
+            "start": relayout_data["xaxis.range[0]"],
+            "end": relayout_data["xaxis.range[1]"],
+        }
+
+    # Ignore other layout changes (autosize, width, height, etc.)
+    # by not updating the Store (PreventUpdate prevents downstream callbacks)
+    raise PreventUpdate
 
 
 def normalize_services(selected_services: list[str] | None) -> list[str]:
@@ -55,19 +92,45 @@ def _get_scatter_week_lookup(
     df_plot = SCATTER_DATA[dimensions + ["Category", "Week"]]
 
     if services:
-        selected_labels = [
-            SERVICES_MAPPING[s] for s in services if s in SERVICES_MAPPING
-        ]
+        selected_labels = [SERVICES_MAPPING[s] for s in services if s in SERVICES_MAPPING]
         df_plot = df_plot[df_plot["Category"].isin(selected_labels)]
 
     if time_range:
         start_week, end_week = time_range
-        df_plot = df_plot[
-            (df_plot["Week"] >= start_week) & (df_plot["Week"] <= end_week)
-        ]
+        df_plot = df_plot[(df_plot["Week"] >= start_week) & (df_plot["Week"] <= end_week)]
 
     # Return weeks as a list indexed by row position (matching pointIndex)
     return df_plot["Week"].tolist()
+
+
+def _get_event_from_violin_click(violin_click_data: dict | None) -> str | None:
+    """Extract the selected event from violin chart click data.
+
+    The violin chart displays events in the order defined by the EVENTS constant.
+    This function maps the click coordinate to the corresponding event name.
+
+    Args:
+        violin_click_data: Click data from violin chart containing point coordinates
+
+    Returns:
+        Event name in lowercase or None if extraction fails
+    """
+    if not violin_click_data:
+        return None
+
+    try:
+        # Get clicked coordinate and round to nearest integer index
+        click_x = violin_click_data["points"][0]["x"]
+        idx = int(round(click_x))
+
+        # Map index to event name using EVENTS constant
+        if 0 <= idx < len(EVENTS):
+            return EVENTS[idx].lower()
+
+    except (KeyError, IndexError, ValueError):
+        pass
+
+    return None
 
 
 @callback(
@@ -79,31 +142,26 @@ def _get_scatter_week_lookup(
     ],
     [
         Input("heatmap-attribute-radio", "value"),
-        Input("line-chart", "relayoutData"),
+        Input("time-range-store", "data"),
+        Input("services-checklist", "value"),
     ],
     prevent_initial_call=True,
 )
-def update_heatmaps_cb(attribute, relayout_data):
-    """Update all 4 heatmaps based on attribute selection and time range."""
-    # Extract week range from line chart selection
+def update_heatmaps_cb(attribute: str, time_range_data: dict | None, selected_services: list[str] | None):
+    """Update all 4 heatmaps based on attribute selection, time range, and selected services."""
+    # Extract week range from Store data
     week_range = None
-    if relayout_data:
-        if "xaxis.range" in relayout_data:
-            r = relayout_data["xaxis.range"]
-            week_range = (r[0], r[1])
-        elif "xaxis.range[0]" in relayout_data and "xaxis.range[1]" in relayout_data:
-            week_range = (
-                relayout_data["xaxis.range[0]"],
-                relayout_data["xaxis.range[1]"],
-            )
+    if time_range_data:
+        week_range = (time_range_data["start"], time_range_data["end"])
+
+    # Normalize selected services (empty list means all services)
+    services = normalize_services(selected_services)
 
     # Define the services and their display names
     figures = []
     for service_id, fig in heatmap_figs.items():
-        z_values, x_labels, y_labels = get_heatmap_data(
-            attribute, service_id, week_range
-        )
-        fig = update_heatmap(fig, z_values, x_labels, y_labels)
+        z_values, x_labels, y_labels = get_heatmap_data(attribute, service_id, week_range)
+        fig = update_heatmap(fig, z_values, x_labels, y_labels, services, service_id)
         figures.append(fig)
 
     return figures
@@ -115,6 +173,7 @@ def update_heatmaps_cb(attribute, relayout_data):
         Input("metric-checklist", "value"),
         Input("services-checklist", "value"),
         Input("scatter-plot", "selectedData"),
+        Input("violin-chart", "clickData"),
     ],
     [
         State("line-chart", "relayoutData"),
@@ -125,6 +184,7 @@ def update_line_chart_cb(
     selected_metrics: list[str],
     selected_services: list[str] | None,
     scatter_selected_data: dict | None,
+    violin_click_data: dict | None,
     relayout_data: dict | None,
     current_fig: dict | None,
 ) -> Figure:
@@ -136,6 +196,7 @@ def update_line_chart_cb(
         selected_metrics: List of selected metrics from checklist
         selected_services: List of selected services from checklist
         scatter_selected_data: Selected data from scatter plot matrix (contains week information)
+        violin_click_data: Click data from violin chart (contains event information)
         relayout_data: Current layout state to preserve zoom/pan
         current_fig: Current figure state to preserve vertical lines (shapes)
     """
@@ -167,9 +228,7 @@ def update_line_chart_cb(
 
     # Check if scatter plot has a non-empty selection
     has_scatter_selection = (
-        scatter_selected_data
-        and "points" in scatter_selected_data
-        and len(scatter_selected_data["points"]) > 0
+        scatter_selected_data and "points" in scatter_selected_data and len(scatter_selected_data["points"]) > 0
     )
 
     if triggered_id == "scatter-plot" and has_scatter_selection:
@@ -194,6 +253,11 @@ def update_line_chart_cb(
         if current_fig and "layout" in current_fig:
             existing_shapes = current_fig["layout"].get("shapes", [])
 
+    # Extract selected event from violin chart click
+    selected_event = None
+    if triggered_id == "violin-chart":
+        selected_event = _get_event_from_violin_click(violin_click_data)
+
     # Use the pre-initialized figure and update it using batch_update
     return update_line_chart(
         linechart_fig,
@@ -202,6 +266,7 @@ def update_line_chart_cb(
         xaxis_range,
         selected_weeks,
         existing_shapes,
+        selected_event,
     )
 
 
@@ -209,105 +274,69 @@ def update_line_chart_cb(
     Output("violin-chart", "figure"),
     [
         Input("violin-metric-radio", "value"),
-        Input("line-chart", "relayoutData"),
+        Input("time-range-store", "data"),
         Input("services-checklist", "value"),
     ],
     prevent_initial_call=True,
 )
-def update_violin_chart(selected_metric, relayout_data, selected_services):
-    """
-    Update violin chart based on:
-    1. Metric selection (Radio Button: Satisfaction, Morale, Ratio)
-    2. Global Time Range (from Line Chart zoom/pan)
-    3. Service selection (Global filter)
+def update_violin_chart_cb(
+    selected_metric: str,
+    time_range_data: dict | None,
+    selected_services: list[str] | None,
+):
+    """Update violin chart based on metric, time range, and service selection.
+
+    Args:
+        selected_metric: Selected metric (satisfaction, morale, ratio)
+        time_range_data: Time range from line chart zoom/pan
+        selected_services: Selected services from global filter
     """
 
     # 1. Filter by Time Range (if available)
     data = SERVICES_DATA.copy()
 
-    if relayout_data:
-        # Check for range updates
-        if "xaxis.range" in relayout_data:
-            r = relayout_data["xaxis.range"]
-            data = data[(data["week"] >= r[0]) & (data["week"] <= r[1])]
-        elif "xaxis.range[0]" in relayout_data and "xaxis.range[1]" in relayout_data:
-            data = data[
-                (data["week"] >= relayout_data["xaxis.range[0]"])
-                & (data["week"] <= relayout_data["xaxis.range[1]"])
-            ]
+    if time_range_data:
+        start = time_range_data["start"]
+        end = time_range_data["end"]
+        data = data[(data["week"] >= start) & (data["week"] <= end)]
 
-    # 2. Call chart creator
-    # Metric logic is handled inside create_violin_chart
-    return create_violin_chart(data, selected_metric, selected_services)
+    # Use the pre-initialized figure and update it using batch_update
+    return update_violin_chart(violin_fig, selected_metric, selected_services)
 
 
 @callback(
     Output("scatter-plot", "figure"),
     [
         Input("services-checklist", "value"),
-        Input("line-chart", "relayoutData"),
+        Input("time-range-store", "data"),
         Input("violin-chart", "clickData"),
     ],
 )
-def update_scatter_plot_cb(selected_services, relayout_data, violin_click_data):
-    """
-    Update scatter plot based on:
-    1. Service selection
-    2. Time range selected in Line Chart (Zoom/Pan)
-    3. Event selected in Violin Chart (Click)
+def update_scatter_plot_cb(
+    selected_services: list[str] | None,
+    time_range_data: dict | None,
+    violin_click_data: dict | None,
+):
+    """Update scatter plot based on service selection, time range, and violin click.
+
+    Args:
+        selected_services: Selected services from global filter
+        time_range_data: Time range from line chart zoom/pan
+        violin_click_data: Click data from violin chart
     """
 
     # 1. Handle Time Range
     time_range = None
-    if relayout_data:
-        if "xaxis.range" in relayout_data:
-            r = relayout_data["xaxis.range"]
-            time_range = (r[0], r[1])
-        elif "xaxis.range[0]" in relayout_data and "xaxis.range[1]" in relayout_data:
-            time_range = (
-                relayout_data["xaxis.range[0]"],
-                relayout_data["xaxis.range[1]"],
-            )
+    if time_range_data:
+        time_range = (time_range_data["start"], time_range_data["end"])
 
-    # 2. Normalize Services
+    # Normalize Services
     services_list = normalize_services(selected_services)
 
-    # 3. Handle Event Selection via Click
+    # Handle Event Selection via Click
     selected_event = None
-    trigger_id = ctx.triggered_id
-
-    # If the user clicked the violin chart, we must interpret the click.
-    if trigger_id == "violin-chart" and violin_click_data:
-        try:
-            # We must reconstruct the EXACT event list used by the violin chart
-            # to map the x-coordinate index back to the event name.
-
-            # A. Filter data by services (just like the violin chart does)
-            # This ensures that if an event is missing from the current view, we don't count it.
-            df_temp = SERVICES_DATA[SERVICES_DATA["service"].isin(services_list)]
-
-            # B. Get unique events
-            events_found = df_temp["event"].unique()
-
-            # C. Sort alphabetically (Capitalized) excluding 'None'
-            sorted_events = sorted(
-                [str(e).capitalize() for e in events_found if str(e).lower() != "none"]
-            )
-
-            # D. Append 'None' at the end if it exists in the data
-            if any(str(e).lower() == "none" for e in events_found):
-                sorted_events.append("None")
-
-            # E. Get the clicked coordinate and round to nearest integer index
-            click_x = violin_click_data["points"][0]["x"]
-            idx = int(round(click_x))
-
-            # F. Map index to name
-            if 0 <= idx < len(sorted_events):
-                selected_event = sorted_events[idx].lower()
-
-        except (KeyError, IndexError, ValueError):
-            selected_event = None
+    if ctx.triggered_id == "violin-chart":
+        selected_event = _get_event_from_violin_click(violin_click_data)
 
     return update_scatter_plot(scatterplot_fig, services_list, time_range, selected_event)
 

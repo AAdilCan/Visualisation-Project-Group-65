@@ -8,6 +8,52 @@ from dashboard.style import (
     STREAM_GRAPH_COLORS,
 )
 
+# Event highlighting constants (similar to scatterplot_matrix.py)
+EVENT_MATCH_OPACITY = 0.9
+EVENT_NO_MATCH_OPACITY = 0.1
+DEFAULT_MARKER_OPACITY = 0.8
+
+
+def _apply_event_styling(fig: go.Figure, selected_event: str | None) -> None:
+    """Apply event-based opacity styling to figure traces.
+
+    Highlights markers for the selected event by adjusting opacity.
+    Note: Line opacity cannot be directly controlled in Plotly, so only markers are highlighted.
+
+    Args:
+        fig: Plotly figure to style
+        selected_event: Event name to highlight (None for default styling)
+    """
+    if selected_event:
+        for trace in fig.data:
+            # Only apply styling to traces with customdata containing event info
+            # Skip stream graph traces and average traces
+            if not hasattr(trace, "customdata") or trace.customdata is None:
+                continue
+
+            try:
+                # Extract event data from customdata (1D array of events)
+                trace_events = trace.customdata
+
+                # Create opacity array for markers based on event match
+                opacity_array = [
+                    (EVENT_MATCH_OPACITY if str(evt).lower() == selected_event else EVENT_NO_MATCH_OPACITY)
+                    for evt in trace_events
+                ]
+
+                # Apply opacity to markers
+                trace.marker.opacity = opacity_array
+
+            except (AttributeError, IndexError, TypeError) as e:
+                # Skip traces that don't have the expected structure
+                print(f"Error applying event styling: {e}")
+                pass
+    else:
+        # Reset to default styling when no event is selected
+        for trace in fig.data:
+            if hasattr(trace, "marker") and trace.marker is not None:
+                trace.marker.opacity = DEFAULT_MARKER_OPACITY
+
 
 def _create_lines(fig, selected_metrics, selected_services, metric_labels):
     """Create lines for each service and selected metric"""
@@ -24,6 +70,10 @@ def _create_lines(fig, selected_metrics, selected_services, metric_labels):
                 dash="solid" if j == 0 else "dash",
             )
 
+            # Prepare customdata with event information for event-based highlighting
+            # customdata format: just the event value for each point
+            customdata = cat_data["event"].tolist()
+
             fig.add_trace(
                 go.Scatter(
                     x=cat_data["Week"],
@@ -31,9 +81,12 @@ def _create_lines(fig, selected_metrics, selected_services, metric_labels):
                     name=f"{cat} - {metric_labels[metric]}",
                     mode="lines+markers",
                     line=line_style,
+                    marker=dict(size=8),  # Make markers more visible
+                    customdata=customdata,
                     hovertemplate=(
                         f"<b>{cat}</b><br>{metric_labels[metric]}<br>"
-                        "Week: %{x}<br>Value: %{y:.1f}<extra></extra>"
+                        "Week: %{x}<br>Value: %{y:.1f}<br>"
+                        "Event: %{customdata}<extra></extra>"
                     ),
                 )
             )
@@ -53,8 +106,7 @@ def _create_lines(fig, selected_metrics, selected_services, metric_labels):
                     dash="dot" if j == 0 else "longdashdot",
                 ),
                 hovertemplate=(
-                    f"<b>Average {metric_labels[metric]}</b><br>"
-                    "Week: %{x}<br>Value: %{y:.1f}<extra></extra>"
+                    f"<b>Average {metric_labels[metric]}</b><br>" "Week: %{x}<br>Value: %{y:.1f}<extra></extra>"
                 ),
             )
         )
@@ -205,6 +257,7 @@ def create_line_chart(
     xaxis_range: list[float] | None = None,
     selected_weeks: list[int] | None = None,
     existing_shapes: list | None = None,
+    selected_event: str | None = None,
 ) -> go.Figure:
     """Create line chart for each service with an average overlay.
 
@@ -214,6 +267,7 @@ def create_line_chart(
         xaxis_range: Optional list [min, max] to preserve x-axis zoom state (weeks)
         selected_weeks: Optional list of week numbers to highlight with vertical lines
         existing_shapes: Optional list of shapes to preserve (e.g., vertical lines from previous state)
+        selected_event: Optional event name to highlight (dims non-matching points/lines)
     """
 
     fig = go.Figure()
@@ -226,6 +280,9 @@ def create_line_chart(
 
     _create_stream_graph(fig, selected_services)
     _create_lines(fig, selected_metrics, selected_services, metric_labels)
+
+    # Apply event-based highlighting if an event is selected
+    _apply_event_styling(fig, selected_event)
 
     # Add vertical lines for selected weeks from scatter plot
     # If selected_weeks provided, create new vertical lines; otherwise use existing_shapes
@@ -256,9 +313,7 @@ def create_line_chart(
             font=dict(size=10),
         ),
         xaxis=xaxis_config,
-        yaxis=dict(
-            title="Metric Value", range=[0, 100], tickvals=[60, 70, 80, 90, 100]
-        ),
+        yaxis=dict(title="Metric Value", range=[0, 100], tickvals=[60, 70, 80, 90, 100]),
         hovermode="x unified",
     )
 
@@ -272,6 +327,7 @@ def update_line_chart(
     xaxis_range: list[float] | None = None,
     selected_weeks: list[int] | None = None,
     existing_shapes: list | None = None,
+    selected_event: str | None = None,
 ) -> go.Figure:
     """Update an existing line chart figure instead of recreating it.
 
@@ -282,6 +338,7 @@ def update_line_chart(
         xaxis_range: Optional list [min, max] to preserve x-axis zoom state (weeks)
         selected_weeks: Optional list of week numbers to highlight with vertical lines
         existing_shapes: Optional list of shapes to preserve (e.g., vertical lines from previous state)
+        selected_event: Optional event name to highlight (dims non-matching points/lines)
     """
     # Metric display names for labels
     metric_labels = {
@@ -297,6 +354,9 @@ def update_line_chart(
         # Rebuild the chart
         _create_stream_graph(fig, selected_services)
         _create_lines(fig, selected_metrics, selected_services, metric_labels)
+
+        # Apply event-based highlighting if an event is selected
+        _apply_event_styling(fig, selected_event)
 
         # Add vertical lines for selected weeks from scatter plot
         # If selected_weeks provided, create new vertical lines; otherwise use existing_shapes
@@ -323,9 +383,7 @@ def update_line_chart(
 
         # Build xaxis config, preserving range if provided
         # Default range is 1-52 (weeks) to avoid empty space on the chart
-        xaxis_config = dict(
-            rangeslider=dict(visible=True), type="linear", range=[1, 52]
-        )
+        xaxis_config = dict(rangeslider=dict(visible=True), type="linear", range=[1, 52])
         if xaxis_range is not None:
             xaxis_config["range"] = xaxis_range
 
@@ -345,9 +403,7 @@ def update_line_chart(
                 font=dict(size=10),
             ),
             xaxis=xaxis_config,
-            yaxis=dict(
-                title="Metric Value", range=[0, 100], tickvals=[60, 70, 80, 90, 100]
-            ),
+            yaxis=dict(title="Metric Value", range=[0, 100], tickvals=[60, 70, 80, 90, 100]),
             hovermode="x unified",
         )
 
@@ -361,4 +417,5 @@ linechart_fig = create_line_chart(
     xaxis_range=None,
     selected_weeks=None,
     existing_shapes=None,
+    selected_event=None,
 )
