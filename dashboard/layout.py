@@ -451,7 +451,7 @@ LAYOUT = html.Div(
         # Header
         html.Div(
             [
-                html.H1("Data Analysis & Visualization Dashboard"),
+                html.H1("HospiTools"),
                 html.P("Explore interactive visualizations with real-time data insights"),
             ],
             className="dashboard-header",

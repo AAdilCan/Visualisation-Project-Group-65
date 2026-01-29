@@ -13,7 +13,7 @@ import dashboard.callbacks  # noqa: F401, Import callbacks to register them
 
 app = dash.Dash(
     __name__,
-    title="Data Visualization Dashboard",
+    title="HospiTools",
     meta_tags=[{"name": "viewport", "content": "width=device-width, initial-scale=1"}],
 )
 
